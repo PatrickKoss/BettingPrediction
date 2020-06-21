@@ -29,10 +29,10 @@ ALLOWED_HOSTS = []
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = False
 CORS_ORIGIN_WHITELIST = [
-    'http://localhost:8080',
+    'http://localhost:8081',
 ]
 CORS_ORIGIN_REGEX_WHITELIST = [
-    'http://localhost:8080',
+    'http://localhost:8081',
 ]
 
 
@@ -48,6 +48,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'csgo_api.apps.CsgoApiConfig',
     'csgo_data_migration.apps.CsgoDataMigrationConfig',
+    'user.apps.UserConfig',
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
