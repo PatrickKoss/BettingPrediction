@@ -1,10 +1,12 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
-import Login from "../views/Login";
-import Register from "../views/Register";
-import Account from "../views/Account";
-import CSGOUpcommingMatches from "../views/CSGOUpcommingMatches";
+import Login from "../views/Account/Login";
+import Register from "../views/Account/Register";
+import Account from "../views/Account/Account";
+import CSGOUpcommingMatches from "../views/CSGO/CSGOUpcommingMatches";
+import CSGOTeamView from "../views/CSGO/CSGOTeamView";
+import CSGOPredictionView from "../views/CSGO/CSGOPredictionView"
 
 Vue.use(VueRouter);
 
@@ -45,9 +47,37 @@ export const routes = [
     loggedIn: -2
   },
   {
-    path: "/csgo-upcomingMatches",
+    path: "/csgo/upcomingMatches",
     name: 'CSGOUpcomingMatches',
     component: CSGOUpcommingMatches,
+    icon: "mdi-plus-box",
+    loggedIn: -2
+  },
+  {
+    path: "/csgo/teams/:id",
+    name: 'CSGOTeamView',
+    component: CSGOTeamView,
+    icon: "mdi-plus-box",
+    loggedIn: -2
+  },
+  {
+    path: "/csgo/matchResult",
+    name: 'CSGOMatchesResult',
+    component: CSGOUpcommingMatches,
+    icon: "mdi-plus-box",
+    loggedIn: -2
+  },
+  {
+    path: "/csgo/statistics",
+    name: 'CSGOStatistics',
+    component: CSGOUpcommingMatches,
+    icon: "mdi-plus-box",
+    loggedIn: -2
+  },
+  {
+    path: "/csgo/prediction/",
+    name: 'CSGOPrediction',
+    component: CSGOPredictionView,
     icon: "mdi-plus-box",
     loggedIn: -2
   },

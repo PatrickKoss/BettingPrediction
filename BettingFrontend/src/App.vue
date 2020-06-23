@@ -26,11 +26,11 @@
 
 <script>
   import {Component, Vue} from 'vue-property-decorator'
-  import NavigationDrawer from "./components/NavigationDrawer";
+  import NavigationDrawer from "./components/General/NavigationDrawer";
   import {UserRestClient} from "./model/UserRestClient";
-  import Toolbar from "./components/Toolbar";
-  import MessageSnackbar from "./components/MessageSnackbar";
-  import CookieBanner from "./components/CookieBanner";
+  import Toolbar from "./components/General/Toolbar";
+  import MessageSnackbar from "./components/General/MessageSnackbar";
+  import CookieBanner from "./components/General/CookieBanner";
 
   @Component({
     components: {

@@ -57,7 +57,7 @@
 
 <script>
   import {Component, Vue, Watch} from 'vue-property-decorator';
-  import {logout} from "../model/Helper";
+  import {logout} from "../../model/Helper";
 
   @Component({
     components: {}

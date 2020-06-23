@@ -50,7 +50,7 @@
         title: "CSGO",
         titleColor: "black",
         picture: "rifle.png",
-        link: "/csgo-upcomingMatches",
+        link: "/csgo/upcomingMatches",
       },
     ];
 

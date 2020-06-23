@@ -48,10 +48,10 @@
 
 <script>
   import {Component, Vue, Watch} from 'vue-property-decorator'
-  import {UserRestClient} from "../model/UserRestClient";
+  import {UserRestClient} from "../../model/UserRestClient";
   import {Validate} from 'vuelidate-property-decorators';
   import {maxLength, minLength, required} from 'vuelidate/lib/validators'
-  import {login} from "../model/Helper";
+  import {login} from "../../model/Helper";
 
   @Component
   class Login extends Vue {

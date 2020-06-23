@@ -26,8 +26,8 @@
 
 <script>
   import {Component, Vue, Watch} from 'vue-property-decorator'
-  import {routes} from "../router";
-  import {logout} from "../model/Helper";
+  import {routes} from "../../router";
+  import {logout} from "../../model/Helper";
 
   @Component
   class NavigationDrawer extends Vue {

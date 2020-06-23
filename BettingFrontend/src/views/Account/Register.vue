@@ -7,7 +7,7 @@
 <script>
   import {Component, Vue} from 'vue-property-decorator';
   //import {UserRestClient} from "../model/UserRestClient";
-  import AccountDataInput from "../components/AccountDataInput";
+  import AccountDataInput from "../../components/AccountDataInput";
 
   @Component({
     components: {

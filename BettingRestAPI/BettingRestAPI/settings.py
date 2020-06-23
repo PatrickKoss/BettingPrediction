@@ -11,10 +11,21 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import tensorflow as tf
+import keras
+
+# Make sure to always run these 4 lines because tensorflow is giving errors if not
+config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
+config.gpu_options.allow_growth = True
+session = tf.compat.v1.Session(config=config)
+tf.compat.v1.keras.backend.set_session(session)
+
+global prediction_model
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+PREDICTION_MODEL_ALL_WINS = keras.models.load_model(os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_allMatchesWins.h5"))
+PREDICTION_MODEL_BO3_WINS = keras.models.load_model(os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_bestOf3Wins.h5"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/

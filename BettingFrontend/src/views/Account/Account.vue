@@ -76,10 +76,10 @@
 
 <script>
   import {Component, Vue} from 'vue-property-decorator';
-  import AccountDataInput from "../components/AccountDataInput";
-  import {UserRestClient} from "../model/UserRestClient";
-  import store from "../store";
-  import router from "../router";
+  import AccountDataInput from "../../components/AccountDataInput";
+  import {UserRestClient} from "../../model/UserRestClient";
+  import store from "../../store";
+  import router from "../../router";
 
   @Component({
     components: {
