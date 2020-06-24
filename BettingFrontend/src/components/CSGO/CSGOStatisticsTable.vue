@@ -1,13 +1,13 @@
 <template>
   <v-card :dark="state.dark">
     <v-card-title>
-      Add button
       <v-spacer></v-spacer>
     </v-card-title>
     <v-data-table
             :headers="statsHeader"
             :items="itemsStats"
             :items-per-page="10"
+            :loading="loading"
     />
   </v-card>
 </template>
@@ -20,6 +20,7 @@
   class CSGOStatisticsTable extends Vue {
     state = this.$store.state;
     itemsStats = [];
+    loading = false;
 
     statsHeader = [{text: "mode", align: 'start', sortable: false, value: 'mode'}, {
       text: "Roi",
@@ -34,8 +35,10 @@
     }];
 
     async mounted() {
+      this.loading = true;
       let responseStats = await new CSGORestClient().getMatchesResultStats();
       this.itemsStats = responseStats.stats;
+      this.loading = false;
     }
   }
 

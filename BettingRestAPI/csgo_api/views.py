@@ -94,7 +94,7 @@ class GetMatchResultStats(APIView):
                 result.append(
                     {"mode": f"odds_{odd}", "accuracy": self.get_accuracy(df),
                      "roi": roi, "sampleSize": len(df)})
-            result = sorted(result, key=lambda k: k["roi"])
+            result = sorted(result, key=lambda k: k["sampleSize"], reverse=True)
 
             json_rep = json.dumps({'message': message.repr_json(),
                                    'stats': result},

@@ -19,6 +19,13 @@ export const routes = [
     loggedIn: 0
   },
   {
+    path: "/csgo/upcomingMatches",
+    name: 'CSGO',
+    component: CSGOUpcommingMatches,
+    icon: "mdi-plus-box",
+    loggedIn: 1
+  },
+  {
     path: "/account",
     name: 'Account',
     component: Account,
@@ -47,15 +54,15 @@ export const routes = [
     loggedIn: -2
   },
   {
-    path: "/csgo/upcomingMatches",
-    name: 'CSGOUpcomingMatches',
-    component: CSGOUpcommingMatches,
+    path: "/csgo/teams/:id",
+    name: 'CSGOTeamView',
+    component: CSGOTeamView,
     icon: "mdi-plus-box",
     loggedIn: -2
   },
   {
-    path: "/csgo/teams/:id",
-    name: 'CSGOTeamView',
+    path: "/csgo/teams/:id/:id2",
+    name: 'CSGOTeamViewBoth',
     component: CSGOTeamView,
     icon: "mdi-plus-box",
     loggedIn: -2
@@ -77,6 +84,13 @@ export const routes = [
   {
     path: "/csgo/prediction/",
     name: 'CSGOPrediction',
+    component: CSGOPredictionView,
+    icon: "mdi-plus-box",
+    loggedIn: -2
+  },
+  {
+    path: "/csgo/prediction/:team1-:mode-:team2",
+    name: 'CSGOPredictionPreSet',
     component: CSGOPredictionView,
     icon: "mdi-plus-box",
     loggedIn: -2

@@ -16,11 +16,13 @@
             :items="itemsUpcomingMatches"
             :items-per-page="15"
             :search="upcomingMatchSearch"
+            :loading="loading"
     >
       <template v-slot:body="{ items }">
         <tbody>
+        <span v-if="loading"><pre>   </pre></span>
         <tr v-for="(item, index) in items" :key="index">
-          <td>{{ item.date }}</td>
+          <td @click="navigateToPrediction(item.Team_1.name, item.Team_2.name, item.mode)"><a>{{ item.date }}</a></td>
           <td @click="navigateToTeam(item.Team_1.id)"><a>{{ item.Team_1.name }}</a></td>
           <td @click="navigateToTeam(item.Team_2.id)"><a>{{ item.Team_2.name }}</a></td>
           <td>{{ item.mode }}</td>
@@ -44,6 +46,7 @@
     state = this.$store.state;
     upcomingMatchSearch = "";
     itemsUpcomingMatches = [];
+    loading = false;
 
     upcomingMatchHeader = [{text: "Date", align: 'start', sortable: false, value: 'date'}, {
       text: "Team 1",
@@ -68,12 +71,14 @@
     }, {text: "Confidence Team 2", align: 'start', sortable: false, value: 'team_2_confidence'}];
 
     async mounted() {
+      this.loading = true;
       let responseUpcomingMatches = await new CSGORestClient().getUpcomingMatches();
       this.itemsUpcomingMatches = responseUpcomingMatches.upcoming_matches;
       for (let i = 0; i < this.itemsUpcomingMatches.length; i++) {
         let date = new Date(Date.parse(this.itemsUpcomingMatches[i].date));
         this.itemsUpcomingMatches[i].date = date.toLocaleString();
       }
+      this.loading = false;
     }
 
     navigateToTeam(id) {
@@ -82,6 +87,10 @@
 
     goToPredictionCreator() {
       this.$router.push(`/csgo/prediction/`);
+    }
+
+    navigateToPrediction(team1, team2, mode) {
+      this.$router.push(`/csgo/prediction/${team1}-${mode}-${team2}`);
     }
   }
 

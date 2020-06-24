@@ -15,11 +15,13 @@
             :items="itemsMatchResult"
             :items-per-page="10"
             :search="matchResultSearch"
+            :loading="loading"
     >
       <template v-slot:body="{ items }">
         <tbody>
+        <span v-if="loading"><pre>   </pre></span>
         <tr :key="index" v-for="(item, index) in items">
-          <td>{{ item.date }}</td>
+          <td @click="navigateToTeamBoth(item.Team_1_id, item.Team_2_id)"><a>{{ item.date }}</a></td>
           <td @click="navigateToTeam(item.Team_1_id)"><a>{{ item.Team1 }}</a></td>
           <td @click="navigateToTeam(item.Team_2_id)"><a>{{ item.Team2 }}</a></td>
           <td>{{ item.mode }}</td>
@@ -45,6 +47,7 @@
     state = this.$store.state;
     matchResultSearch = "";
     itemsMatchResult = [];
+    loading = false;
 
     matchResultHeader = [{text: "Date", align: 'start', sortable: false, value: 'date'}, {
       text: "Team 1",
@@ -79,16 +82,22 @@
     }, {text: "Team 2 Win", align: 'start', sortable: false, value: 'team_2_win'}];
 
     async mounted() {
+      this.loading = true;
       let responseMatchesResult = await new CSGORestClient().getMatchesResult();
       this.itemsMatchResult = responseMatchesResult.matchResult;
       for (let i = 0; i < this.itemsMatchResult.length; i++) {
         let date = new Date(Date.parse(this.itemsMatchResult[i].date));
         this.itemsMatchResult[i].date = date.toLocaleString();
       }
+      this.loading = false;
     }
 
     navigateToTeam(id) {
       this.$router.push(`/csgo/teams/${id}/`);
+    }
+
+    navigateToTeamBoth(id, id2) {
+      this.$router.push(`/csgo/teams/${id}/${id2}`);
     }
   }
 
