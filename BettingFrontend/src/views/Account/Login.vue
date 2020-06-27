@@ -36,10 +36,17 @@
         </v-col>
       </v-row>
     </v-form>
-    <v-row>
+    <!--<v-row>
       <v-spacer/>
       <p>
         Do not have an account yet? Register<a @click="$router.push('/register')" style="margin-left: 3px">here</a>!
+      </p>
+      <v-spacer/>
+    </v-row> -->
+    <v-row>
+      <v-spacer/>
+      <p>
+        Do you want beta access? Contact the admin!
       </p>
       <v-spacer/>
     </v-row>
@@ -70,7 +77,6 @@
      * if the user is already logged in route him to home
      */
     mounted() {
-      if (this.state.token !== "") this.$router.push("/");
       window.addEventListener('keydown', this.keyDown, false);
     }
 

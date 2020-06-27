@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'^teams/(?P<id>[0-9]+)$', views.GetTeam.as_view(), name='id'),
     url(r'^teams/', views.GetTeams.as_view()),
     url(r'^prediction/', views.CreatePrediction.as_view()),
+    url(r'^checkPermissions/', views.CheckPermissions.as_view()),
 ]

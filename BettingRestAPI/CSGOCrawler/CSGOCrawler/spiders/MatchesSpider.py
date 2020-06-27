@@ -5,6 +5,7 @@ import scrapy
 from apscheduler.schedulers.twisted import TwistedScheduler
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
+from django.conf import settings
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BettingRestAPI.settings')
 django.setup()
@@ -64,6 +65,8 @@ class MatchesSpider(scrapy.Spider):
         match_date = parser.parse(match_date).date()
         match_date = datetime.strptime(f"{match_date.day}-{match_date.month}-{match_date.year} {match_time}",
                                        "%d-%m-%Y %H:%M")
+        if match_date < datetime.now():
+            return
 
         mode = response.meta["mode"]
         team1 = response.css('div.team-name div.name::text').extract()[0]
@@ -89,8 +92,10 @@ class MatchesSpider(scrapy.Spider):
         # get the correct prediction model for the right mode
         if mode == "BO1":
             prediction_model = keras.models.load_model("../../../csgo_api/PredictionModels/NNModel_allMatchesWins.h5")
+            prediction_model_svm = settings.PREDICTION_MODEL_SVM_ALL_WINS
         else:
             prediction_model = keras.models.load_model("../../../csgo_api/PredictionModels/NNModel_bestOf3Wins.h5")
+            prediction_model_svm = settings.PREDICTION_MODEL_SVM_BO3_WINS
 
         # create the prediction numpy array
         prediction_array = np.array([[team1_model.winning_percentage]])
@@ -107,11 +112,13 @@ class MatchesSpider(scrapy.Spider):
         team_1_confidence = round(1 - team_2_confidence, 3)
         team_1_confidence = team_1_confidence.item()
         team_2_confidence = team_2_confidence.item()
+        prediction_svm = prediction_model_svm.predict(prediction_array)
+        prediction_svm = prediction_svm[0]
 
         # after all data is gathered, save the data in the database
         model = Match.objects.create(date=match_date, Team_1=team1_model, Team_2=team2_model, odds_team_1=odds_team1,
                                      odds_team_2=odds_team2, team_1_confidence=team_1_confidence,
-                                     team_2_confidence=team_2_confidence, mode=mode)
+                                     team_2_confidence=team_2_confidence, mode=mode, prediction_svm=prediction_svm)
         model.save()
 
     def get_player_stats_array(self, player):

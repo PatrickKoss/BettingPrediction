@@ -44,6 +44,7 @@
   @Component
   class Home extends Vue {
     state = this.$store.state;
+
     modes = [
       {
         id: 1,

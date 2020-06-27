@@ -28,6 +28,11 @@
       sortable: true,
       value: 'roi'
     }, {text: "Accuracy", align: 'start', sortable: true, value: 'accuracy'}, {
+      text: "Average Odds",
+      align: 'start',
+      sortable: true,
+      value: 'averageOdds'
+    }, {
       text: "Sample Size",
       align: 'start',
       sortable: true,

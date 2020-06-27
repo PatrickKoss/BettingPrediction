@@ -21,7 +21,7 @@
     </v-row>
     <v-row style="padding: 15px">
       <v-spacer/>
-      <v-dialog
+    <!--  <v-dialog
               v-model="deleteDialog"
               width="500"
       >
@@ -66,7 +66,7 @@
             </v-btn>
           </v-card-actions>
         </v-card>
-      </v-dialog>
+      </v-dialog>-->
       <v-btn @click="editingMode = true" color="primary" style="margin-left: 15px" type="submit">Update Account Data
       </v-btn>
       <v-spacer/>

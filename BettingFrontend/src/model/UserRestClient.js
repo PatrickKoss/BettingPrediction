@@ -12,7 +12,11 @@ export class UserRestClient {
    * @returns {Promise<T>}
    */
   async login(user) {
-    return (await axios.post(`${this.api}/user/login/`, user)).data;
+    try {
+      return (await axios.post(`${this.api}/user/login/`, user)).data;
+    } catch (error) {
+      return {message: error.response.data.message, status: error.response.status};
+    }
   }
 
   /**
@@ -21,7 +25,11 @@ export class UserRestClient {
    */
   async logout() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
-    return (await axios.post(`${this.api}/user/logout/`)).data;
+    try {
+      return (await axios.post(`${this.api}/user/logout/`)).data;
+    } catch (error) {
+      return {message: error.response.data.message, status: error.response.status};
+    }
   }
 
   /**
@@ -30,7 +38,11 @@ export class UserRestClient {
    */
   async getAuthenticated() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
-    return (await axios.get(`${this.api}/user/authenticated/`)).data;
+    try {
+      return (await axios.get(`${this.api}/user/authenticated/`)).data;
+    } catch (error) {
+      return {message: error.response.data.message, status: error.response.status};
+    }
   }
 
   /**
@@ -39,7 +51,11 @@ export class UserRestClient {
    * @returns {Promise<T>}
    */
   async register(user) {
-    return (await axios.post(`${this.api}/user/register/`, user)).data;
+    try {
+      return (await axios.post(`${this.api}/user/register/`, user)).data;
+    } catch (error) {
+      return {message: error.response.data.message, status: error.response.status};
+    }
   }
 
   /**

@@ -6,7 +6,7 @@
             grow
             v-model="tab"
     >
-      <v-tab v-for="t in tabs" :key="t">
+      <v-tab :key="t" v-for="t in tabs">
         {{t}}
       </v-tab>
     </v-tabs>
@@ -40,11 +40,10 @@
   })
   class CSGOUpcommingMatches extends Vue {
     state = this.$store.state;
-    tab = null;
+    tab = 0;
     tabs = ['Upcoming Matches', 'Matches Result', 'Statistics'];
 
-    async mounted() {
-      if (this.state.token === "") this.$router.push("/");
+    mounted() {
       if (this.$route.path === "/csgo/matchResult") {
         this.tab = 1;
       }

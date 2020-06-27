@@ -74,9 +74,11 @@
       this.loading = true;
       let responseUpcomingMatches = await new CSGORestClient().getUpcomingMatches();
       this.itemsUpcomingMatches = responseUpcomingMatches.upcoming_matches;
-      for (let i = 0; i < this.itemsUpcomingMatches.length; i++) {
-        let date = new Date(Date.parse(this.itemsUpcomingMatches[i].date));
-        this.itemsUpcomingMatches[i].date = date.toLocaleString();
+      if (responseUpcomingMatches.message.messageType !== "error") {
+        for (let i = 0; i < this.itemsUpcomingMatches.length; i++) {
+          let date = new Date(Date.parse(this.itemsUpcomingMatches[i].date));
+          this.itemsUpcomingMatches[i].date = date.toLocaleString();
+        }
       }
       this.loading = false;
     }

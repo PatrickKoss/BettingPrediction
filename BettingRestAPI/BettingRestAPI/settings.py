@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import tensorflow as tf
 import keras
+import pickle
 
 # Make sure to always run these 4 lines because tensorflow is giving errors if not
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
@@ -26,6 +27,8 @@ global prediction_model
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PREDICTION_MODEL_ALL_WINS = keras.models.load_model(os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_allMatchesWins.h5"))
 PREDICTION_MODEL_BO3_WINS = keras.models.load_model(os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_bestOf3Wins.h5"))
+PREDICTION_MODEL_SVM_ALL_WINS = pickle.load(open(os.path.join(BASE_DIR, "csgo_api/PredictionModels/clfSVM_allMatchesWins.sav"), 'rb'))
+PREDICTION_MODEL_SVM_BO3_WINS = pickle.load(open(os.path.join(BASE_DIR, "csgo_api/PredictionModels/clfSVM_bestOf3Wins.sav"), 'rb'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
