@@ -20,7 +20,7 @@ def check_authorization(request):
     except Token.DoesNotExist:
         pass
     if user is None:
-        message = Message("error", f"Not logged in")
+        message = Message("error", f"No user matches the sent token")
         json_rep = json.dumps({'message': message.repr_json()}, cls=ComplexEncoder)
         json_rep = json.loads(json_rep)
         return False, json_rep, status.HTTP_401_UNAUTHORIZED

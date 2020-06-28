@@ -125,8 +125,10 @@ class StatsSpider(scrapy.Spider):
         start_date, end_date = self.get_dates_from_response(response)
         # get winning percentage
         wins_losses = response.css(".large-strong::text").extract()
-        winning_percentage = int(wins_losses[1].split("/")[0]) / (
-          int(wins_losses[1].split("/")[0]) + int(wins_losses[1].split("/")[-1]))
+        winning_percentage = int(wins_losses[1].split("/")[0]) / ((
+                                                                    int(wins_losses[1].split("/")[0]) + int(
+                                                                      wins_losses[1].split("/")[-1])) if int(
+            wins_losses[1].split("/")[0]) + int(wins_losses[1].split("/")[-1]) > 0 else 1)
         winning_percentage = round(winning_percentage, 2)
 
         # create players of the team

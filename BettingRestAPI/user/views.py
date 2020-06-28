@@ -73,7 +73,7 @@ class GetAuthenticated(APIView):
             pass
         message = Message("success", f"Yes still authenticated")
         if user is None:
-            message = Message("error", f"Not authenticated")
+            message = Message("error", f"No user matches the sent token")
             return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
         else:
             user_name = Token.objects.get(key=request.headers.get('Authorization')).user

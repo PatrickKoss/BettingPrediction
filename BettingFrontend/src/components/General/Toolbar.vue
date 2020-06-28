@@ -36,12 +36,12 @@
         >
           <v-list-item-title>Login</v-list-item-title>
         </v-list-item>
-        <v-list-item
+<!--        <v-list-item
                 @click="navigateToRoute('/register')"
                 v-if="state.token === ''"
         >
           <v-list-item-title>Register</v-list-item-title>
-        </v-list-item>
+        </v-list-item>-->
       </v-list>
     </v-menu>
     <v-tooltip bottom>

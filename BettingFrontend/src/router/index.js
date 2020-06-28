@@ -12,16 +12,16 @@ import {UserRestClient} from "../model/UserRestClient";
 
 Vue.use(VueRouter);
 
-async function checkPermissions(next, response) {
-  if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+async function checkPermissions(next, response, from) {
   if (response.status === 401) {
     AppStore.state.message = response.message;
-    // localStorage.token = undefined;
-    next({name: 'Login'});
+    localStorage.token = undefined;
+    AppStore.state.token = "";
+    if (from.name !== "Login") next({name: 'Login'});
   }
   else if (response.status === 403) {
     AppStore.state.message = response.message;
-    next({name: 'Home'});
+    if (from.name !== "Home") next({name: 'Home'});
   } else {
     next();
   }
@@ -33,9 +33,10 @@ export const routes = [
     name: 'Home',
     component: Home,
     icon: "mdi-home",
-    loggedIn: 0,
+    loggedIn: 1,
     beforeEnter: async (to, from, next) => {
-      await checkPermissions(next, await new UserRestClient().getAuthenticated());
+      if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+      await checkPermissions(next, await new UserRestClient().getAuthenticated(), from);
     }
   },
   {
@@ -45,7 +46,8 @@ export const routes = [
     icon: "mdi-plus-box",
     loggedIn: 1,
     beforeEnter: async (to, from, next) => {
-      await checkPermissions(next, await new CSGORestClient().checkPermissions());
+      if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+      await checkPermissions(next, await new CSGORestClient().checkPermissions(), from);
     }
   },
   {
@@ -55,7 +57,8 @@ export const routes = [
     icon: "mdi-account",
     loggedIn: 1,
     beforeEnter: async (to, from, next) => {
-      await checkPermissions(next, await new UserRestClient().getAuthenticated());
+      if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+      await checkPermissions(next, await new UserRestClient().getAuthenticated(), from);
     }
   },
   {
@@ -86,7 +89,8 @@ export const routes = [
     icon: "mdi-plus-box",
     loggedIn: -2,
     beforeEnter: async (to, from, next) => {
-      await checkPermissions(next, await new CSGORestClient().checkPermissions());
+      if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+      await checkPermissions(next, await new CSGORestClient().checkPermissions(), from);
     }
   },
   {
@@ -96,7 +100,8 @@ export const routes = [
     icon: "mdi-plus-box",
     loggedIn: -2,
     beforeEnter: async (to, from, next) => {
-      await checkPermissions(next, await new CSGORestClient().checkPermissions());
+      if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+      await checkPermissions(next, await new CSGORestClient().checkPermissions(), from);
     }
   },
   {
@@ -106,7 +111,8 @@ export const routes = [
     icon: "mdi-plus-box",
     loggedIn: -2,
     beforeEnter: async (to, from, next) => {
-      await checkPermissions(next, await new CSGORestClient().checkPermissions());
+      if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+      await checkPermissions(next, await new CSGORestClient().checkPermissions(), from);
     }
   },
   {
@@ -116,7 +122,8 @@ export const routes = [
     icon: "mdi-plus-box",
     loggedIn: -2,
     beforeEnter: async (to, from, next) => {
-      await checkPermissions(next, await new CSGORestClient().checkPermissions());
+      if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+      await checkPermissions(next, await new CSGORestClient().checkPermissions(), from);
     }
   },
   {
@@ -126,7 +133,8 @@ export const routes = [
     icon: "mdi-plus-box",
     loggedIn: -2,
     beforeEnter: async (to, from, next) => {
-      await checkPermissions(next, await new CSGORestClient().checkPermissions());
+      if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+      await checkPermissions(next, await new CSGORestClient().checkPermissions(), from);
     }
   },
   {
@@ -136,7 +144,8 @@ export const routes = [
     icon: "mdi-plus-box",
     loggedIn: -2,
     beforeEnter: async (to, from, next) => {
-      await checkPermissions(next, await new CSGORestClient().checkPermissions());
+      if (localStorage.token !== undefined) AppStore.state.token = localStorage.token;
+      await checkPermissions(next, await new CSGORestClient().checkPermissions(), from);
     }
   },
 ];

@@ -42,8 +42,9 @@
     state = this.$store.state;
     tab = 0;
     tabs = ['Upcoming Matches', 'Matches Result', 'Statistics'];
+    checkFirst = false;
 
-    mounted() {
+    created() {
       if (this.$route.path === "/csgo/matchResult") {
         this.tab = 1;
       }
@@ -54,11 +55,17 @@
 
     @Watch("tab", {immediate: true, deep: true})
     __watch_tab() {
-      if (this.tab === 0 && this.$route.path !== "/csgo/upcomingMatches") {
-        this.$router.push(`/csgo/upcomingMatches`);
-      } else if (this.tab === 1 && this.$route.path !== "/csgo/matchResult") {
-        this.$router.push(`/csgo/matchResult`);
-      } else if (this.tab === 2 && this.$route.path !== "/csgo/statistics") this.$router.push(`/csgo/statistics`);
+      if (this.checkFirst) {
+        if (this.tab === 0 && this.$route.path !== "/csgo/upcomingMatches") {
+          this.$router.push(`/csgo/upcomingMatches`);
+        } else if (this.tab === 1 && this.$route.path !== "/csgo/matchResult") {
+          this.$router.push(`/csgo/matchResult`);
+        } else if (this.tab === 2 && this.$route.path !== "/csgo/statistics") {
+          this.$router.push(`/csgo/statistics`);
+        }
+      } else {
+        this.checkFirst = true;
+      }
     }
   }
 
