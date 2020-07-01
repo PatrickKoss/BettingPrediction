@@ -48,27 +48,27 @@
     itemsUpcomingMatches = [];
     loading = false;
 
-    upcomingMatchHeader = [{text: "Date", align: 'start', sortable: false, value: 'date'}, {
+    upcomingMatchHeader = [{text: "Date", align: 'start', sortable: true, value: 'date'}, {
       text: "Team 1",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'Team_1.name'
-    }, {text: "Team 2", align: 'start', sortable: false, value: 'Team_2.name'}, {
+    }, {text: "Team 2", align: 'start', sortable: true, value: 'Team_2.name'}, {
       text: "Mode",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'mode'
     }, {
       text: "Odds Team 1",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'odds_team_1'
-    }, {text: "Odds Team 2", align: 'start', sortable: false, value: 'odds_team_2'}, {
+    }, {text: "Odds Team 2", align: 'start', sortable: true, value: 'odds_team_2'}, {
       text: "Confidence Team 1",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'team_1_confidence'
-    }, {text: "Confidence Team 2", align: 'start', sortable: false, value: 'team_2_confidence'}];
+    }, {text: "Confidence Team 2", align: 'start', sortable: true, value: 'team_2_confidence'}];
 
     async mounted() {
       this.loading = true;

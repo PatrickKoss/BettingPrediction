@@ -49,37 +49,37 @@
     itemsMatchResult = [];
     loading = false;
 
-    matchResultHeader = [{text: "Date", align: 'start', sortable: false, value: 'date'}, {
+    matchResultHeader = [{text: "Date", align: 'start', sortable: true, value: 'date'}, {
       text: "Team 1",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'Team1'
-    }, {text: "Team 2", align: 'start', sortable: false, value: 'Team2'}, {
+    }, {text: "Team 2", align: 'start', sortable: true, value: 'Team2'}, {
       text: "Mode",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'mode'
     }, {
       text: "Odds Team 1",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'odds_team_1'
-    }, {text: "Odds Team 2", align: 'start', sortable: false, value: 'odds_team_2'}, {
+    }, {text: "Odds Team 2", align: 'start', sortable: true, value: 'odds_team_2'}, {
       text: "Confidence Team 1",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'team_1_confidence'
     }, {
       text: "Confidence Team 2",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'team_2_confidence'
     }, {
       text: "Team 1 Win",
       align: 'start',
-      sortable: false,
+      sortable: true,
       value: 'team_1_win'
-    }, {text: "Team 2 Win", align: 'start', sortable: false, value: 'team_2_win'}];
+    }, {text: "Team 2 Win", align: 'start', sortable: true, value: 'team_2_win'}];
 
     async mounted() {
       this.loading = true;

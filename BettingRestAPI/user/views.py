@@ -11,10 +11,35 @@ from BettingRestAPI.Serializer.UserSerializer import UserSerializer
 from BettingRestAPI.utils.Message import Message
 
 
+def check_authorization_in_header(request):
+    if "Authorization" not in request.headers:
+        message = Message("error", f"No authorization token sent")
+        return False, create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
+    else:
+        return True, ""
+
+
+def check_user(request):
+    user = None
+    try:
+        user = Token.objects.get(key=request.headers.get('Authorization'))
+    except Token.DoesNotExist:
+        pass
+    return user
+
+
+def check_user_data_request(data):
+    if 'username' not in data or 'email' not in data or 'password' not in data:
+        message = Message("error", f"No username or password or email sent")
+        return False, create_response({"message": message.repr_json()}, status.HTTP_400_BAD_REQUEST)
+    else:
+        return True, ""
+
+
 # login route
 class Login(APIView):
     def post(self, request):
-        data = json.loads(request.body)
+        data = json.loads(request.body or "{}")
         # check correctness of body
         if 'username' not in data or 'password' not in data:
             message = Message("error", f"No username or password sent")
@@ -42,15 +67,11 @@ class Login(APIView):
 class Logout(APIView):
     def post(self, request):
         # check if token is in the header
-        if "Authorization" not in request.headers:
-            message = Message("error", f"No authorization token sent")
-            return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
+        check_authorization, response = check_authorization_in_header(request)
+        if not check_authorization:
+            return response
         # logging out is basically deleting the token for the user
-        user = None
-        try:
-            user = Token.objects.get(key=request.headers.get('Authorization'))
-        except Token.DoesNotExist:
-            pass
+        user = check_user(request)
         message = Message("success", f"Successfully logged out")
         if user is None:
             message = Message("error", f"Can´t logout since nobody is logged in")
@@ -63,14 +84,10 @@ class Logout(APIView):
 # route for checking if the user is logged in. Meaning if the token exists. Returns the user to the token.
 class GetAuthenticated(APIView):
     def get(self, request):
-        if "Authorization" not in request.headers:
-            message = Message("error", f"No authorization token sent")
-            return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
-        user = None
-        try:
-            user = Token.objects.get(key=request.headers.get('Authorization'))
-        except Token.DoesNotExist:
-            pass
+        check_authorization, response = check_authorization_in_header(request)
+        if not check_authorization:
+            return response
+        user = check_user(request)
         message = Message("success", f"Yes still authenticated")
         if user is None:
             message = Message("error", f"No user matches the sent token")
@@ -85,19 +102,15 @@ class GetAuthenticated(APIView):
 # register new user
 class Register(APIView):
     def post(self, request):
-        if "Authorization" not in request.headers:
-            message = Message("error", f"No authorization token sent")
-            return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
-        data = json.loads(request.body)
-        # check request body
-        if 'username' not in data or 'email' not in data or 'password' not in data:
-            message = Message("error", f"No username or password or email sent")
-            return create_response({"message": message.repr_json()}, status.HTTP_400_BAD_REQUEST)
-        staff_member = None
-        try:
-            staff_member = Token.objects.get(key=request.headers.get('Authorization'))
-        except Token.DoesNotExist:
-            pass
+        check_authorization, response = check_authorization_in_header(request)
+        if not check_authorization:
+            return response
+        data = json.loads(request.body or "{}")
+
+        check_data, response = check_user_data_request(data)
+        if not check_data:
+            return response
+        staff_member = check_user(request)
         if staff_member is None:
             message = Message("error", f"Not authenticated")
             return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
@@ -116,11 +129,13 @@ class Register(APIView):
                     user = User.objects.create_user(username=data['username'],
                                                     email=data['email'],
                                                     password=data['password'])
-                    token, created = Token.objects.get_or_create(user=user)
-                    user = UserSerializer(user).data
-                    message = Message("success", f"Welcome {data['username']}")
-                    return create_response({"message": message.repr_json(), "token": token.key, 'user': user},
-                                           status.HTTP_200_OK)
+                    # token, created = Token.objects.get_or_create(user=user)
+                    # user = UserSerializer(user).data
+                    # message = Message("success", f"Welcome {data['username']}")
+                    # return create_response({"message": message.repr_json(), "token": token.key, 'user': user},
+                    #                        status.HTTP_200_OK)
+                    message = Message("success", f"User {data['username']} successful created")
+                    return create_response({"message": message.repr_json()}, status.HTTP_200_OK)
                 else:
                     message = Message("error", "")
                     for error in serialized_user.errors:
@@ -130,15 +145,11 @@ class Register(APIView):
 
 # delete user route
 class DeleteUser(APIView):
-    def post(self, request, id):
-        if "Authorization" not in request.headers:
-            message = Message("error", f"No authorization token sent")
-            return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
-        staff_member = None
-        try:
-            staff_member = Token.objects.get(key=request.headers.get('Authorization'))
-        except Token.DoesNotExist:
-            pass
+    def delete(self, request, id):
+        check_authorization, response = check_authorization_in_header(request)
+        if not check_authorization:
+            return response
+        staff_member = check_user(request)
         if staff_member is None:
             message = Message("error", f"Not authenticated")
             return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
@@ -155,28 +166,25 @@ class DeleteUser(APIView):
                     message = Message("error", f"User does not exist")
                     return create_response({'message': message.repr_json()}, status.HTTP_400_BAD_REQUEST)
                 else:
+                    delete_user = delete_user.first()
                     token, _ = Token.objects.get_or_create(user=delete_user)
                     Token.objects.get(key=token).delete()
                     delete_user.delete()
-                    message = Message("success", f"Successfully deleted account {delete_user.name}")
+                    message = Message("success", f"Successfully deleted account {id}")
                     return create_response({'message': message.repr_json()}, status.HTTP_200_OK)
 
 
 # update user data
 class UpdateUser(APIView):
     def post(self, request):
-        if "Authorization" not in request.headers:
-            message = Message("error", f"No authorization token sent")
-            return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
-        data = json.loads(request.body)
-        if 'username' not in data or 'email' not in data or 'password' not in data:
-            message = Message("error", f"No username or password or email sent")
-            return create_response({"message": message.repr_json()}, status.HTTP_400_BAD_REQUEST)
-        user = None
-        try:
-            user = Token.objects.get(key=request.headers.get('Authorization'))
-        except Token.DoesNotExist:
-            pass
+        check_authorization, response = check_authorization_in_header(request)
+        if not check_authorization:
+            return response
+        data = json.loads(request.body or "{}")
+        check_data, response = check_user_data_request(data)
+        if not check_data:
+            return response
+        user = check_user(request)
         if user is not None:
             serialized_user = UserSerializer(data=data)
             # validate the user and make sure that the user exists error is ignored when the username is the same as in

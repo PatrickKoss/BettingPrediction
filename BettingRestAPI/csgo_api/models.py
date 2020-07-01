@@ -38,8 +38,8 @@ class Match(models.Model):
                                related_name="Team_2")
     odds_team_1 = models.DecimalField(decimal_places=2, max_digits=10, default=1)
     odds_team_2 = models.DecimalField(decimal_places=2, max_digits=10, default=1)
-    team_1_confidence = models.DecimalField(decimal_places=2, max_digits=10, default=1)
-    team_2_confidence = models.DecimalField(decimal_places=2, max_digits=10, default=1)
+    team_1_confidence = models.DecimalField(decimal_places=4, max_digits=10, default=1)
+    team_2_confidence = models.DecimalField(decimal_places=4, max_digits=10, default=1)
     prediction_svm = models.DecimalField(decimal_places=2, max_digits=10, default=1)
     mode = models.CharField(max_length=20, default="bo1")
 

@@ -46,12 +46,10 @@ def update():
     matches = Match.objects.all()
     for match in matches:
         prediction_array = get_prediction_array(match)
-        if match.mode == "BO1":
-            prediction_model = settings.PREDICTION_MODEL_SVM_ALL_WINS
-        else:
-            prediction_model = settings.PREDICTION_MODEL_SVM_BO3_WINS
+        prediction_model = settings.PREDICTION_MODEL_SVM_ALL_WINS
         prediction = prediction_model.predict(prediction_array)
         match.prediction_svm = prediction[0]
+        match.save()
 
 
 def get_average_odds():
@@ -76,8 +74,22 @@ def check_permissions():
     for permission in permissions:
         print(permission.name)
 
+def update_prediction_confidence():
+    matches = Match.objects.all()
+    for match in matches:
+        prediction_array = get_prediction_array(match)
+        prediction_model = settings.PREDICTION_MODEL_ALL_WINS
+        team_2_confidence = round(prediction_model.predict(prediction_array)[0][0], 4)
+        team_1_confidence = round(1 - team_2_confidence, 4)
+        team_1_confidence = team_1_confidence.item()
+        team_2_confidence = team_2_confidence.item()
+        match.team_1_confidence = team_1_confidence
+        match.team_2_confidence = team_2_confidence
+        match.save()
+
 
 if __name__ == "__main__":
     # update()
     # get_average_odds()
-    check_permissions()
+    # check_permissions()
+    update_prediction_confidence()

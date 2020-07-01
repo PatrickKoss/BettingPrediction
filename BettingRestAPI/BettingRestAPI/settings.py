@@ -49,6 +49,12 @@ CORS_ORIGIN_REGEX_WHITELIST = [
     'http://localhost:8081',
 ]
 
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+NOSE_ARGS = [
+    '--with-coverage',
+    '--cover-package=user,csgo_api',
+]
+
 
 # Application definition
 
@@ -65,6 +71,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_nose',
 ]
 
 MIDDLEWARE = [

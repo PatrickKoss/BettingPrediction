@@ -90,12 +90,14 @@ class MatchesSpider(scrapy.Spider):
             return
 
         # get the correct prediction model for the right mode
-        if mode == "BO1":
-            prediction_model = keras.models.load_model("../../../csgo_api/PredictionModels/NNModel_allMatchesWins.h5")
-            prediction_model_svm = settings.PREDICTION_MODEL_SVM_ALL_WINS
-        else:
-            prediction_model = keras.models.load_model("../../../csgo_api/PredictionModels/NNModel_bestOf3Wins.h5")
-            prediction_model_svm = settings.PREDICTION_MODEL_SVM_BO3_WINS
+        # if mode == "BO1":
+        #     prediction_model = settings.PREDICTION_MODEL_ALL_WINS
+        #     prediction_model_svm = settings.PREDICTION_MODEL_SVM_ALL_WINS
+        # else:
+        #     prediction_model = settings.PREDICTION_MODEL_BO3_WINS
+        #     prediction_model_svm = settings.PREDICTION_MODEL_SVM_BO3_WINS
+        prediction_model = settings.PREDICTION_MODEL_ALL_WINS
+        prediction_model_svm = settings.PREDICTION_MODEL_SVM_ALL_WINS
 
         # create the prediction numpy array
         prediction_array = np.array([[team1_model.winning_percentage]])
@@ -108,8 +110,8 @@ class MatchesSpider(scrapy.Spider):
                                            self.get_team_player_array(team2_model.Player_1, team2_model.Player_2,
                                                                       team2_model.Player_3, team2_model.Player_4,
                                                                       team2_model.Player_5)), axis=1)
-        team_2_confidence = round(prediction_model.predict(prediction_array)[0][0], 3)
-        team_1_confidence = round(1 - team_2_confidence, 3)
+        team_2_confidence = round(prediction_model.predict(prediction_array)[0][0], 4)
+        team_1_confidence = round(1 - team_2_confidence, 4)
         team_1_confidence = team_1_confidence.item()
         team_2_confidence = team_2_confidence.item()
         prediction_svm = prediction_model_svm.predict(prediction_array)
@@ -136,6 +138,6 @@ if __name__ == "__main__":
     process = CrawlerProcess(get_project_settings())
     scheduler = TwistedScheduler()
     scheduler.add_job(process.crawl, args=[MatchesSpider])
-    scheduler.add_job(process.crawl, 'interval', args=[MatchesSpider], seconds=60*60*3)
+    scheduler.add_job(process.crawl, 'interval', args=[MatchesSpider], seconds=60*60*1)
     scheduler.start()
     process.start(False)

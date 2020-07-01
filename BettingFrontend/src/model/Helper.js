@@ -1,5 +1,4 @@
 import store from "../store/index";
-import {UserRestClient} from "./UserRestClient";
 import router from "../router";
 
 /**
@@ -7,14 +6,21 @@ import router from "../router";
  * @returns {Promise<void>}
  */
 export async function logout() {
-  store.state.message = (await new UserRestClient().logout()).message;
-  if (store.state.message.messageType === "success") {
-    store.state.user = {username: "", email: ""};
-    localStorage.token = undefined;
-    store.state.token = "";
-    if (router.currentRoute.path !== "/login") {
-      await router.push("/login");
-    }
+  /*  store.state.message = (await new UserRestClient().logout()).message;
+    if (store.state.message.messageType === "success") {
+      store.state.user = {username: "", email: ""};
+      localStorage.token = undefined;
+      store.state.token = "";
+      if (router.currentRoute.path !== "/login") {
+        await router.push("/login");
+      }
+    }*/
+  store.state.message = {message: "You are successfully logged out", messageType: "success"};
+  store.state.user = {username: "", email: ""};
+  localStorage.token = undefined;
+  store.state.token = "";
+  if (router.currentRoute.path !== "/login") {
+    await router.push("/login");
   }
 }
 

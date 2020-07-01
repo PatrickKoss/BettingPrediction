@@ -6,7 +6,7 @@
     <v-data-table
             :headers="statsHeader"
             :items="itemsStats"
-            :items-per-page="10"
+            :items-per-page="15"
             :loading="loading"
     />
   </v-card>
@@ -22,7 +22,12 @@
     itemsStats = [];
     loading = false;
 
-    statsHeader = [{text: "mode", align: 'start', sortable: false, value: 'mode'}, {
+    statsHeader = [{text: "Mode", align: 'start', sortable: true, value: 'mode'}, {
+      text: "Model",
+      align: 'start',
+      sortable: true,
+      value: 'svm'
+    }, {
       text: "Roi",
       align: 'start',
       sortable: true,
@@ -32,6 +37,11 @@
       align: 'start',
       sortable: true,
       value: 'averageOdds'
+    }, {text: "Odds", align: 'start', sortable: true, value: 'odds'}, {
+      text: "Odds Reduction",
+      align: 'start',
+      sortable: true,
+      value: 'odds_reduction'
     }, {
       text: "Sample Size",
       align: 'start',

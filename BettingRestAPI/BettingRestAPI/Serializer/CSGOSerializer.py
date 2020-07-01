@@ -23,7 +23,7 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Match
         fields = ['date', 'Team_1', 'Team_2', 'odds_team_1', 'odds_team_2', 'team_1_confidence', 'team_2_confidence',
-                  'mode']
+                  'mode', "prediction_svm"]
 
 
 class MatchResultSerializer(serializers.HyperlinkedModelSerializer):
