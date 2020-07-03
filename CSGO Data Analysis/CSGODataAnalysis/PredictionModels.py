@@ -1,4 +1,5 @@
 import pickle
+from sys import platform
 
 import keras
 import numpy as np
@@ -7,8 +8,9 @@ import tensorflow as tf
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
 from keras.optimizers import Adam
-from sklearn import neighbors, svm
+from sklearn import svm
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 
 # Make sure to always run these 4 lines because tensorflow is giving errors if not
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
@@ -21,57 +23,57 @@ def build_models_machine_learning_all_matches_wins():
     # get training and testing data
     X_train, X_test, y_train, y_test = get_split_train_test_all_matches()
 
-    clfSVM, clfKNeighbors = get_fitted_classifier(X_train, y_train)
+    clfSVM = get_fitted_classifier(X_train, y_train)
 
     # get the confidence of the classifiers
     confidence_SVM = clfSVM.score(X_test, y_test)
-    confidence_KNeighbors = clfKNeighbors.score(X_test, y_test)
 
-    # SVM achieved 68.8% confidence and KNeighbors 59.4%
+    # SVM achieved 68.8%
     print("SVM confidence all matches wins: ", confidence_SVM)
-    print("KNeighbors confidence all matches wins: ", confidence_KNeighbors)
 
     # save the classifiers for future predictions
-    pickle.dump(clfSVM, open("./PredictionModels/clfSVM_allMatchesWins.sav", "wb"))
-    pickle.dump(clfKNeighbors, open("./PredictionModels/clfKNeighbors_allMatchesWins.sav", "wb"))
+    if platform == "linux" or platform == "linux2":
+        pickle.dump(clfSVM, open("./PredictionModels/clfSVM_allMatchesWins_linux.sav", "wb"))
+    if platform == "win32":
+        pickle.dump(clfSVM, open("./PredictionModels/clfSVM_allMatchesWins.sav", "wb"))
 
 
 def build_models_machine_learning_best_of_3_wins():
     # get training and testing data
     X_train, X_test, y_train, y_test = get_split_train_test_best_of_3_wins()
 
-    clfSVM, clfKNeighbors = get_fitted_classifier(X_train, y_train)
+    clfSVM = get_fitted_classifier(X_train, y_train)
 
     # get the confidence of the classifiers
     confidence_SVM = clfSVM.score(X_test, y_test)
-    confidence_KNeighbors = clfKNeighbors.score(X_test, y_test)
 
     # SVM achieved 71.6% confidence and KNeighbors 64.4%
     print("SVM confidence best of 3 wins: ", confidence_SVM)
-    print("KNeighbors confidence best of 3 wins: ", confidence_KNeighbors)
 
     # save the classifiers for future predictions
-    pickle.dump(clfSVM, open("./PredictionModels/clfSVM_bestOf3Wins.sav", "wb"))
-    pickle.dump(clfKNeighbors, open("./PredictionModels/clfKNeighbors_bestOf3Wins.sav", "wb"))
+    if platform == "linux" or platform == "linux2":
+        pickle.dump(clfSVM, open("./PredictionModels/clfSVM_bestOf3Wins_linux.sav", "wb"))
+    if platform == "win32":
+        pickle.dump(clfSVM, open("./PredictionModels/clfSVM_bestOf3Wins.sav", "wb"))
 
 
 def build_models_machine_learning_best_of_3_rounds():
     # get training and testing data
     X_train, X_test, y_train, y_test = get_split_train_test_best_of_3_rounds()
 
-    clfSVM, clfKNeighbors = get_fitted_classifier(X_train, y_train)
+    clfSVM = get_fitted_classifier(X_train, y_train)
 
     # get the confidence of the classifiers
     confidence_SVM = clfSVM.score(X_test, y_test)
-    confidence_KNeighbors = clfKNeighbors.score(X_test, y_test)
 
     # SVM achieved 64.3% confidence and KNeighbors 58.7%
     print("SVM confidence best of 3 rounds: ", confidence_SVM)
-    print("KNeighbors confidence best of 3 rounds: ", confidence_KNeighbors)
 
     # save the classifiers for future predictions
-    pickle.dump(clfSVM, open("./PredictionModels/clfSVM_bestOf3Rounds.sav", "wb"))
-    pickle.dump(clfKNeighbors, open("./PredictionModels/clfKNeighbors_bestOf3Rounds.sav", "wb"))
+    if platform == "linux" or platform == "linux2":
+        pickle.dump(clfSVM, open("./PredictionModels/clfSVM_bestOf3Rounds_linux.sav", "wb"))
+    if platform == "win32":
+        pickle.dump(clfSVM, open("./PredictionModels/clfSVM_bestOf3Rounds.sav", "wb"))
 
 
 def build_models_deep_learning_all_matches_wins():
@@ -88,7 +90,10 @@ def build_models_deep_learning_all_matches_wins():
     print('Test accuracy NN all wins:', acc)
 
     # save the model
-    model.save("./PredictionModels/NNModel_allMatchesWins_new.h5")
+    if platform == "linux" or platform == "linux2":
+        model.save("./PredictionModels/NNModel_allMatchesWins_linux.h5")
+    if platform == "win32":
+        model.save("./PredictionModels/NNModel_allMatchesWins.h5")
 
 
 def build_models_deep_learning_best_of_3_wins():
@@ -105,7 +110,10 @@ def build_models_deep_learning_best_of_3_wins():
     print('Test accuracy NN best of 3 wins:', acc)
 
     # save the model
-    model.save("./PredictionModels/NNModel_bestOf3Wins.h5")
+    if platform == "linux" or platform == "linux2":
+        model.save("./PredictionModels/NNModel_bestOf3Wins_linux.h5")
+    if platform == "win32":
+        model.save("./PredictionModels/NNModel_bestOf3Wins.h5")
 
 
 def build_models_deep_learning_best_of_3_rounds():
@@ -122,7 +130,10 @@ def build_models_deep_learning_best_of_3_rounds():
     print('Test accuracy NN best of 3 rounds:', acc)
 
     # save the model
-    model.save("./PredictionModels/NNModel_bestOf3Rounds.h5")
+    if platform == "linux" or platform == "linux2":
+        model.save("./PredictionModels/NNModel_bestOf3Rounds_linux.h5")
+    if platform == "win32":
+        model.save("./PredictionModels/NNModel_bestOf3Rounds.h5")
 
 
 def get_split_train_test_all_matches():
@@ -165,11 +176,11 @@ def get_split_train_test_best_of_3_rounds():
 def get_fitted_nn_model(X_train, X_test, y_train, y_test):
     # build the model
     model = Sequential()
-    model.add(Dense(80, activation='relu', input_shape=(int(np.shape(X_train)[1]),)))
+    model.add(Dense(60, activation='relu', input_shape=(int(np.shape(X_train)[1]),)))
     model.add(Dropout(20))
-    model.add((Dense(40, activation='relu')))
+    model.add((Dense(30, activation='relu')))
     model.add(Dropout(20))
-    model.add((Dense(20, activation='relu')))
+    model.add((Dense(15, activation='relu')))
     model.add(Dropout(20))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.001),
@@ -184,13 +195,11 @@ def get_fitted_nn_model(X_train, X_test, y_train, y_test):
 def get_fitted_classifier(X_train, y_train):
     # define the classifiers
     clfSVM = svm.SVC(kernel='poly', degree=10, C=4)
-    clfKNeighbors = neighbors.KNeighborsClassifier(n_neighbors=9, algorithm='auto', n_jobs=-1, weights='distance')
 
     # fit the classifiers
     clfSVM.fit(X_train, y_train)
-    clfKNeighbors.fit(X_train, y_train)
 
-    return clfSVM, clfKNeighbors
+    return clfSVM
 
 
 def test_prediction():
@@ -202,12 +211,35 @@ def test_prediction():
     print(prediction)
 
 
+def build_kfold_svm():
+    df = pd.read_csv("./Data/complete_matches.csv", index_col=False, dtype='float64')
+
+    X = np.array(df.drop(["Win"], 1))
+    y = np.array((df["Win"]))
+
+    kfold = KFold(n_splits=10, shuffle=True)
+
+    fold_no = 1
+    accurracy_per_fold = []
+
+    for train, test in kfold.split(X, y):
+        clfSVM = svm.SVC(kernel='poly', degree=10, C=4)
+        clfSVM.fit(X[train], y[train])
+        confidence_SVM = clfSVM.score(X[test], y[test])
+        print(f"Confidence for fold {fold_no}: {confidence_SVM}")
+        accurracy_per_fold.append(confidence_SVM)
+        fold_no = fold_no + 1
+
+    print("--------------------------------------------------")
+    print(f"average confidence: {np.mean(accurracy_per_fold)}")
+
+
 if __name__ == "__main__":
-    # build_models_machine_learning_all_matches_wins()
-    # build_models_machine_learning_best_of_3_wins()
-    # build_models_machine_learning_best_of_3_rounds()
-    # build_models_deep_learning_all_matches_wins()
+    build_models_machine_learning_all_matches_wins()
+    build_models_machine_learning_best_of_3_wins()
+    build_models_machine_learning_best_of_3_rounds()
+    build_models_deep_learning_all_matches_wins()
     build_models_deep_learning_best_of_3_wins()
-    # build_models_deep_learning_best_of_3_rounds()
-    # build_softmax_models()
+    build_models_deep_learning_best_of_3_rounds()
     # test_prediction()
+    # build_kfold_svm()

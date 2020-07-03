@@ -113,7 +113,7 @@ class GetMatchResultStats(APIView):
         df["money"] = df.apply(lambda row: (float(row.odds_team_1) - 1 - odd_reduction) if row.team_1_win == 1
                                                                                            and row.team_1_confidence >= row.team_2_confidence
         else (float(
-            row.odds_team_2) - 1 - odd_reduction) if row.team_2_win == 1 and row.team_1_confidence < row.team_2_confidence else -1,
+            row.odds_team_2) - 1) if row.team_2_win == 1 and row.team_1_confidence < row.team_2_confidence else -1,
                                axis=1)
         return df
 
@@ -128,18 +128,18 @@ class GetMatchResultStats(APIView):
 
     def get_df_with_money_svm(self, df, odd_reduction=0):
         df["money"] = df.apply(lambda row: (float(row.odds_team_1) - 1 - odd_reduction) if row.team_1_win == 1
-                                                                                           and row.prediction_svm == 0
-        else (float(row.odds_team_2) - 1 - odd_reduction) if row.team_2_win == 1 and row.prediction_svm == 1 else -1,
+                                                                           and row.prediction_svm == 0
+        else (float(row.odds_team_2) - 1) if row.team_2_win == 1 and row.prediction_svm == 1 else -1,
                                axis=1)
         return df
 
-    def get_average_odds(self, df):
+    def get_average_odds(self, df, odd_reduction=0):
         filter_team_1_df = df[df["team_1_win"] == 1]
         result_array = np.array([filter_team_1_df["odds_team_1"]])
         filter_team_2_df = df[df["team_2_win"] == 1]
         result_array = np.concatenate((result_array, np.array([filter_team_2_df["odds_team_2"]])), axis=1)
         average_odds = sum(result_array[0]) / len(result_array[0])
-        average_odds = round(float(average_odds), 2)
+        average_odds = round(round(float(average_odds), 2) - odd_reduction, 2)
         return average_odds
 
     def create_result_list(self, df_result, result, svm, mode=None):
@@ -151,7 +151,7 @@ class GetMatchResultStats(APIView):
                 odd = round(odd, 2)
                 odd_reduction = round(odd_reduction, 2)
                 if not svm:
-                    df = self.get_df_with_threshold(df_copy, 0.51)
+                    df = self.get_df_with_threshold(df_copy, 0.5001)
                 else:
                     df = df_copy.copy()
                 df = self.get_df_odds_threshold(df, odd)
@@ -166,7 +166,7 @@ class GetMatchResultStats(APIView):
                 if len(df) < len(df_result) * 0.3:
                     continue
                 roi = self.get_roi(df)
-                average_odds = self.get_average_odds(df)
+                average_odds = self.get_average_odds(df, odd_reduction)
                 if mode is None:
                     mode_selected = "all games"
                 else:
@@ -408,6 +408,7 @@ class CreatePrediction(APIView):
         json_rep = json.dumps({'message': message.repr_json()}, cls=ComplexEncoder)
         json_rep = json.loads(json_rep)
         return json_rep
+
 
 class CheckPermissions(APIView):
     def get(self, request):
