@@ -187,7 +187,7 @@ def get_fitted_nn_model(X_train, X_test, y_train, y_test):
                   metrics=['accuracy'])
 
     # fit the model
-    model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=1200, verbose=0)
+    model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=700, verbose=0)
 
     return model
 
@@ -235,9 +235,9 @@ def build_kfold_svm():
 
 
 if __name__ == "__main__":
-    build_models_machine_learning_all_matches_wins()
-    build_models_machine_learning_best_of_3_wins()
-    build_models_machine_learning_best_of_3_rounds()
+    # build_models_machine_learning_all_matches_wins()
+    # build_models_machine_learning_best_of_3_wins()
+    # build_models_machine_learning_best_of_3_rounds()
     build_models_deep_learning_all_matches_wins()
     build_models_deep_learning_best_of_3_wins()
     build_models_deep_learning_best_of_3_rounds()
