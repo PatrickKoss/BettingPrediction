@@ -127,6 +127,7 @@ class GetMatchResultStats(APIView):
         return df[(df["odds_team_1"] >= odds) & (df["odds_team_2"] >= odds)]
 
     def get_df_with_money_svm(self, df, odd_reduction=0):
+        """return a data frame with the money made on a bet"""
         df["money"] = df.apply(lambda row: (float(row.odds_team_1) - 1 - odd_reduction) if row.team_1_win == 1
                                                                            and row.prediction_svm == 0
         else (float(row.odds_team_2) - 1) if row.team_2_win == 1 and row.prediction_svm == 1 else -1,
