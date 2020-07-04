@@ -124,6 +124,7 @@ class GetMatchResultStats(APIView):
         return round(float(len(df[df["money"] >= 0]) / len(df)), 2)
 
     def get_df_odds_threshold(self, df, odds):
+        """return a data frame with a given odds threshold"""
         return df[(df["odds_team_1"] >= odds) & (df["odds_team_2"] >= odds)]
 
     def get_df_with_money_svm(self, df, odd_reduction=0):
