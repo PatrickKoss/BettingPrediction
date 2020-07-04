@@ -121,6 +121,7 @@ class GetMatchResultStats(APIView):
         return round(float((df["money"].sum()) / len(df)), 2)
 
     def get_accuracy(self, df):
+        """return the total accuracy. Every money entry that made money"""
         return round(float(len(df[df["money"] >= 0]) / len(df)), 2)
 
     def get_df_odds_threshold(self, df, odds):
