@@ -134,6 +134,7 @@ class GetMatchResultStats(APIView):
         return df
 
     def get_average_odds(self, df, odd_reduction=0):
+        """This method calculates the average odds of all bets"""
         filter_team_1_df = df[df["team_1_win"] == 1]
         result_array = np.array([filter_team_1_df["odds_team_1"]])
         filter_team_2_df = df[df["team_2_win"] == 1]
