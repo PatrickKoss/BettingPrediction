@@ -118,6 +118,7 @@ class GetMatchResultStats(APIView):
         return df
 
     def get_roi(self, df):
+        """return the total roi"""
         return round(float((df["money"].sum()) / len(df)), 2)
 
     def get_accuracy(self, df):
