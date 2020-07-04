@@ -14,6 +14,8 @@ import os
 import tensorflow as tf
 import keras
 import pickle
+from sys import platform
+import sys
 
 # Make sure to always run these 4 lines because tensorflow is giving errors if not
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
@@ -25,10 +27,25 @@ global prediction_model
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PREDICTION_MODEL_ALL_WINS = keras.models.load_model(os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_allMatchesWins.h5"))
-PREDICTION_MODEL_BO3_WINS = keras.models.load_model(os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_bestOf3Wins.h5"))
-PREDICTION_MODEL_SVM_ALL_WINS = pickle.load(open(os.path.join(BASE_DIR, "csgo_api/PredictionModels/clfSVM_allMatchesWins.sav"), 'rb'))
-PREDICTION_MODEL_SVM_BO3_WINS = pickle.load(open(os.path.join(BASE_DIR, "csgo_api/PredictionModels/clfSVM_bestOf3Wins.sav"), 'rb'))
+
+if platform == "linux" or platform == "linux2":
+    PREDICTION_MODEL_ALL_WINS = keras.models.load_model(
+        os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_allMatchesWins_linux.h5"))
+    PREDICTION_MODEL_BO3_WINS = keras.models.load_model(
+        os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_bestOf3Wins_linux.h5"))
+    PREDICTION_MODEL_SVM_ALL_WINS = pickle.load(
+        open(os.path.join(BASE_DIR, "csgo_api/PredictionModels/clfSVM_allMatchesWins_linux.sav"), 'rb'))
+    PREDICTION_MODEL_SVM_BO3_WINS = pickle.load(
+        open(os.path.join(BASE_DIR, "csgo_api/PredictionModels/clfSVM_bestOf3Wins_linux.sav"), 'rb'))
+if platform == "win32":
+    PREDICTION_MODEL_ALL_WINS = keras.models.load_model(
+        os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_allMatchesWins.h5"))
+    PREDICTION_MODEL_BO3_WINS = keras.models.load_model(
+        os.path.join(BASE_DIR, "csgo_api/PredictionModels/NNModel_bestOf3Wins.h5"))
+    PREDICTION_MODEL_SVM_ALL_WINS = pickle.load(
+        open(os.path.join(BASE_DIR, "csgo_api/PredictionModels/clfSVM_allMatchesWins.sav"), 'rb'))
+    PREDICTION_MODEL_SVM_BO3_WINS = pickle.load(
+        open(os.path.join(BASE_DIR, "csgo_api/PredictionModels/clfSVM_bestOf3Wins.sav"), 'rb'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -37,7 +54,10 @@ PREDICTION_MODEL_SVM_BO3_WINS = pickle.load(open(os.path.join(BASE_DIR, "csgo_ap
 SECRET_KEY = '-$wkg1iw9f=2(2s6b2buh@w+c6-%mhjv9aripua2b&m@uj_iqd'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if len(sys.argv) >= 2 and sys.argv[1] == 'runserver':
+    DEBUG = True
+else:
+    DEBUG = False
 
 ALLOWED_HOSTS = []
 CORS_ORIGIN_ALLOW_ALL = True
