@@ -102,7 +102,7 @@ class StatsSpider(scrapy.Spider):
         ttm.update({"team1_link": team1_link, "team2_link": team2_link})
 
         # check if team needs to be recreated if the team is older than 2 weeks
-        past_month_date = datetime.now() - timedelta(days=15)
+        past_month_date = datetime.now() - timedelta(days=7)
         # check if team is in db. If not create the team
         team_1 = Team.objects.filter(name=ttm["team1_name"])
         if not team_1.exists():
