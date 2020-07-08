@@ -1,0 +1,40 @@
+version: "3"
+services:
+ bettingrestapi:
+  container_name: BettingRestAPI
+  build:
+   context: ./BettingRestAPI
+   dockerfile: ./Dockerfile
+  hostname: BettingRestAPI
+  ports:
+   - 8000:8000
+  volumes:
+   - ./BettingRestAPI:/src/BettingRestAPI
+  command: bash -c 'python manage.py makemigrations && python manage.py migrate && gunicorn BettingRestAPI.wsgi -b 0.0.0.0:8000'
+
+ bettingfrontend:
+  container_name: BettingFrontend
+  build:
+   context: ./BettingFrontend
+   dockerfile: ./Dockerfile
+  image: nginx
+  ports:
+   - 80:80
+  links:
+   - bettingrestapi
+ 
+ matchesspider:
+  container_name: MatchesSpider
+  build:
+   context: ./BettingRestAPI
+   dockerfile: ./MatchesDockerfile
+  links:
+   - bettingrestapi
+  
+ statsspider:
+  container_name: StatsSpider
+  build:
+   context: ./BettingRestAPI
+   dockerfile: ./StatsDockerfile
+  links:
+   - bettingrestapi

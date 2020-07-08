@@ -59,7 +59,7 @@ if len(sys.argv) >= 2 and sys.argv[1] == 'runserver':
 else:
     DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["0.0.0.0", "localhost", "172.28.1.4", "172.28.0.0"]
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = False
 CORS_ORIGIN_WHITELIST = [

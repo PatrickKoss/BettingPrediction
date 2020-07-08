@@ -1,0 +1,15 @@
+FROM python:3.7
+
+WORKDIR /usr/src/BettingRestAPI
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+ENV PYTHONPATH=/usr/src/BettingRestAPI
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE 1
+
+WORKDIR /usr/src/BettingRestAPI/CSGOCrawler/CSGOCrawler/spiders
+CMD [ "python", "MatchesSpider.py" ]
