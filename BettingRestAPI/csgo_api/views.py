@@ -84,7 +84,7 @@ class GetMatchResultStats(APIView):
             df_matches_result.drop(columns=["id"], inplace=True)
             df_result = df_matches_result.merge(df_upcoming_matches, left_on=["Team_1_id", "Team_2_id", "date"],
                                                 right_on=["Team_1_id", "Team_2_id", "date"], how="inner")
-            df_result = df_result[(df_result["odds_team_1"] <= 4.5) & (df_result["odds_team_2"] <= 4.5)]
+            # df_result = df_result[(df_result["odds_team_1"] <= 4.5) & (df_result["odds_team_2"] <= 4.5)]
             # first set odds, sec threshold,
             result = []
             self.create_result_list(df_result, result, False)
