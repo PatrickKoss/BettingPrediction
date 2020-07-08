@@ -11,6 +11,8 @@ services:
   volumes:
    - ./BettingRestAPI:/src/BettingRestAPI
   command: bash -c 'python manage.py makemigrations && python manage.py migrate && gunicorn BettingRestAPI.wsgi -b 0.0.0.0:8000'
+  depends_on:
+   - db
 
  bettingfrontend:
   container_name: BettingFrontend
@@ -38,3 +40,13 @@ services:
    dockerfile: ./StatsDockerfile
   links:
    - bettingrestapi
+
+ db:
+  image: "postgres"
+  environment:
+   - "POSTGRES_HOST_AUTH_METHOD=trust"
+  volumes:
+   - postgres_data:/var/lib/postgresql/data/
+
+volumes:
+ postgres_data:

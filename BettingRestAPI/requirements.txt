@@ -63,6 +63,7 @@ parsel==1.6.0
 Pillow==7.1.2
 Protego==0.1.16
 protobuf==3.11.3
+psycopg2-binary==2.8.5
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycparser==2.20
