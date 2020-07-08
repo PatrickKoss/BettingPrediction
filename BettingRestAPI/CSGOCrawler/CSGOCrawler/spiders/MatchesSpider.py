@@ -135,7 +135,6 @@ class MatchesSpider(scrapy.Spider):
 
 
 if __name__ == "__main__":
-    print("hello")
     process = CrawlerProcess(get_project_settings())
     scheduler = TwistedScheduler()
     scheduler.add_job(process.crawl, args=[MatchesSpider])
