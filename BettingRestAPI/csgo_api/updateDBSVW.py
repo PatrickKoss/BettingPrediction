@@ -89,7 +89,7 @@ def update_prediction_confidence():
 
 
 if __name__ == "__main__":
-    # update()
+    update()
     # get_average_odds()
     # check_permissions()
-    update_prediction_confidence()
+    # update_prediction_confidence()
