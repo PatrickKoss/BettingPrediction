@@ -21,7 +21,7 @@ services:
    dockerfile: ./Dockerfile
   image: nginx
   ports:
-   - 80:80
+   - 80:81
   links:
    - bettingrestapi
   environment:
