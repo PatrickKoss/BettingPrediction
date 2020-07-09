@@ -252,6 +252,6 @@ if __name__ == "__main__":
     process = CrawlerProcess(get_project_settings())
     scheduler = TwistedScheduler()
     scheduler.add_job(process.crawl, args=[StatsSpider])
-    scheduler.add_job(process.crawl, 'interval', args=[StatsSpider], seconds=60 * 10 * 1)
+    scheduler.add_job(process.crawl, 'interval', args=[StatsSpider], seconds=60 * 60 * 4)
     scheduler.start()
     process.start(False)
