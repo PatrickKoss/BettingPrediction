@@ -5,6 +5,11 @@ import store from "../store/index"
 export class CSGORestClient {
 
   api = config.apiEndpoint;
+  constructor() {
+    if (process.env.NODE_ENV !== "development") {
+      this.api = config.apiEndpointProduction
+    }
+  }
 
   async getUpcomingMatches() {
     axios.defaults.headers.common['Authorization'] = store.state.token;

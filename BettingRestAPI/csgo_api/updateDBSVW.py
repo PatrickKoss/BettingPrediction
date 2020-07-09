@@ -78,6 +78,10 @@ def update_prediction_confidence():
     matches = Match.objects.all()
     for match in matches:
         prediction_array = get_prediction_array(match)
+        # if match.mode == "BO1":
+        #     prediction_model = settings.PREDICTION_MODEL_ALL_WINS
+        # else:
+        #     prediction_model = settings.PREDICTION_MODEL_BO3_WINS
         prediction_model = settings.PREDICTION_MODEL_ALL_WINS
         team_2_confidence = round(prediction_model.predict(prediction_array)[0][0], 4)
         team_1_confidence = round(1 - team_2_confidence, 4)
