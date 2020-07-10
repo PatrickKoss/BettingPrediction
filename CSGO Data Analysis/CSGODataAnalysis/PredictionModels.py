@@ -176,18 +176,18 @@ def get_split_train_test_best_of_3_rounds():
 def get_fitted_nn_model(X_train, X_test, y_train, y_test):
     # build the model
     model = Sequential()
-    model.add(Dense(60, activation='relu', input_shape=(int(np.shape(X_train)[1]),)))
+    model.add(Dense(80, activation='relu', input_shape=(int(np.shape(X_train)[1]),)))
     model.add(Dropout(20))
-    model.add((Dense(30, activation='relu')))
+    model.add((Dense(40, activation='relu')))
     model.add(Dropout(20))
-    model.add((Dense(15, activation='relu')))
+    model.add((Dense(20, activation='relu')))
     model.add(Dropout(20))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.001),
                   metrics=['accuracy'])
 
     # fit the model
-    model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=700, verbose=0)
+    model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=900, verbose=0)
 
     return model
 
