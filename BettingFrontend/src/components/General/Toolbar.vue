@@ -1,7 +1,8 @@
 <template>
   <v-app-bar :dark="state.dark" app elevate-on-scroll>
     <v-app-bar-nav-icon @click.stop="state.drawer = !state.drawer"/>
-    <v-toolbar-title @click="navigateToRoute('/')" id="toolbarTitle">Betting Predictor</v-toolbar-title>
+    <v-toolbar-title @click="navigateToRoute('/')" id="toolbarTitle"><span
+            v-if="$vuetify.breakpoint.mobile">BP</span><span v-else>Betting Predictor</span></v-toolbar-title>
     <v-spacer/>
 
     <v-switch class="ma-2" label="Dark Mode" style="padding-top: 27px" v-model="state.dark"/>
@@ -36,12 +37,12 @@
         >
           <v-list-item-title>Login</v-list-item-title>
         </v-list-item>
-<!--        <v-list-item
-                @click="navigateToRoute('/register')"
-                v-if="state.token === ''"
-        >
-          <v-list-item-title>Register</v-list-item-title>
-        </v-list-item>-->
+        <!--        <v-list-item
+                        @click="navigateToRoute('/register')"
+                        v-if="state.token === ''"
+                >
+                  <v-list-item-title>Register</v-list-item-title>
+                </v-list-item>-->
       </v-list>
     </v-menu>
     <v-tooltip bottom>

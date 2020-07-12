@@ -5,12 +5,20 @@ import store from "../store/index"
 export class CSGORestClient {
 
   api = config.apiEndpoint;
+
+  /**
+   * set the right api endpoint
+   */
   constructor() {
     if (process.env.NODE_ENV !== "development") {
       this.api = config.apiEndpointProduction
     }
   }
 
+  /**
+   * get the upcoming matches
+   * @returns {Promise<{message: *, status: number}|T>}
+   */
   async getUpcomingMatches() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
@@ -20,6 +28,10 @@ export class CSGORestClient {
     }
   }
 
+  /**
+   * get the result of matches
+   * @returns {Promise<{message: *, status: number}|T>}
+   */
   async getMatchesResult() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
@@ -29,6 +41,10 @@ export class CSGORestClient {
     }
   }
 
+  /**
+   * get stats of matches how the model performed
+   * @returns {Promise<{message: *, status: number}|T>}
+   */
   async getMatchesResultStats() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
@@ -38,6 +54,11 @@ export class CSGORestClient {
     }
   }
 
+  /**
+   * get a team by its id
+   * @param id
+   * @returns {Promise<{message: *, status: number}|T>}
+   */
   async getTeam(id) {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
@@ -47,6 +68,10 @@ export class CSGORestClient {
     }
   }
 
+  /**
+   * get all teams
+   * @returns {Promise<{message: *, status: number}|T>}
+   */
   async getTeams() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
@@ -56,6 +81,13 @@ export class CSGORestClient {
     }
   }
 
+  /**
+   * get a prediction
+   * @param team1
+   * @param team2
+   * @param mode
+   * @returns {Promise<{message: *, status: number}|T>}
+   */
   async createPrediction(team1, team2, mode) {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
@@ -65,6 +97,10 @@ export class CSGORestClient {
     }
   }
 
+  /***
+   * check if a user has the right permissions
+   * @returns {Promise<{message: *, status: number}|T>}
+   */
   async checkPermissions() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {

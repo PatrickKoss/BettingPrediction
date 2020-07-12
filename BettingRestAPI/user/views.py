@@ -12,6 +12,8 @@ from BettingRestAPI.utils.Message import Message
 
 
 def check_authorization_in_header(request):
+    """helping method for checking the authorization"""
+    # check if the authorization token is sent in the headers
     if "Authorization" not in request.headers:
         message = Message("error", f"No authorization token sent")
         return False, create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
@@ -20,6 +22,7 @@ def check_authorization_in_header(request):
 
 
 def check_user(request):
+    """check if the user is logged in. -> Has a token"""
     user = None
     try:
         user = Token.objects.get(key=request.headers.get('Authorization'))
@@ -29,6 +32,7 @@ def check_user(request):
 
 
 def check_user_data_request(data):
+    """helper method to check if the right data is sent"""
     if 'username' not in data or 'email' not in data or 'password' not in data:
         message = Message("error", f"No username or password or email sent")
         return False, create_response({"message": message.repr_json()}, status.HTTP_400_BAD_REQUEST)
@@ -39,6 +43,7 @@ def check_user_data_request(data):
 # login route
 class Login(APIView):
     def post(self, request):
+        """method log in the user and returns a user object with a token"""
         data = json.loads(request.body or "{}")
         # check correctness of body
         if 'username' not in data or 'password' not in data:
@@ -66,6 +71,7 @@ class Login(APIView):
 # logout route
 class Logout(APIView):
     def post(self, request):
+        """method logout the user by deleting his token"""
         # check if token is in the header
         check_authorization, response = check_authorization_in_header(request)
         if not check_authorization:
@@ -84,6 +90,7 @@ class Logout(APIView):
 # route for checking if the user is logged in. Meaning if the token exists. Returns the user to the token.
 class GetAuthenticated(APIView):
     def get(self, request):
+        """Method authenticate the user. Checks if he is logged in"""
         check_authorization, response = check_authorization_in_header(request)
         if not check_authorization:
             return response
@@ -102,19 +109,23 @@ class GetAuthenticated(APIView):
 # register new user
 class Register(APIView):
     def post(self, request):
+        """method register a new user"""
         check_authorization, response = check_authorization_in_header(request)
         if not check_authorization:
             return response
         data = json.loads(request.body or "{}")
 
+        # check if right data was sent
         check_data, response = check_user_data_request(data)
         if not check_data:
             return response
+        # check if the user who want to create a new user is logged in
         staff_member = check_user(request)
         if staff_member is None:
             message = Message("error", f"Not authenticated")
             return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
         else:
+            # check if the user who want to create a new user has the permission to do so
             permission = Permission.objects.get(name="Can add user")
             staff_name = Token.objects.get(key=request.headers.get('Authorization')).user
             staff_user = User.objects.get(username=staff_name)
@@ -146,6 +157,8 @@ class Register(APIView):
 # delete user route
 class DeleteUser(APIView):
     def delete(self, request, id):
+        """method deletes a user given by his id"""
+        # check authorization
         check_authorization, response = check_authorization_in_header(request)
         if not check_authorization:
             return response
@@ -154,6 +167,7 @@ class DeleteUser(APIView):
             message = Message("error", f"Not authenticated")
             return create_response({'message': message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
         else:
+            # check permission to delete a user
             staff_name = Token.objects.get(key=request.headers.get('Authorization')).user
             staff_member = User.objects.get(username=staff_name)
             permission = Permission.objects.get(name="Can delete user")
@@ -174,9 +188,9 @@ class DeleteUser(APIView):
                     return create_response({'message': message.repr_json()}, status.HTTP_200_OK)
 
 
-# update user data
 class UpdateUser(APIView):
     def post(self, request):
+        """Method updates a user"""
         check_authorization, response = check_authorization_in_header(request)
         if not check_authorization:
             return response

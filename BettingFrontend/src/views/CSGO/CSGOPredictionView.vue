@@ -14,7 +14,7 @@
       />
     </v-row>
     <v-row no-gutters>
-      <v-col :sm="5.9" style="margin: 10px">
+      <v-col :sm="6" :cols="12" style="padding: 10px">
         <v-row no-gutters>
           <v-autocomplete
                   :items="teams"
@@ -126,7 +126,7 @@
           </v-data-table>
         </v-row>
       </v-col>
-      <v-col :sm="5.9" style="margin: 10px">
+      <v-col :sm="6" :cols="12" style="padding: 10px">
         <v-row no-gutters>
           <v-autocomplete
                   :items="teams"
@@ -314,6 +314,9 @@
       value: 'kast'
     }];
 
+    /**
+     * do the init logic which get the data and check some stuff
+     */
     async mounted() {
       if ("team1" in this.$route.params && "team2" in this.$route.params && "mode" in this.$route.params) {
         this.loadingTeamParams = true;
@@ -339,6 +342,10 @@
       }
     }
 
+    /**
+     * sent data to the backend and get the prediction
+     * @returns {Promise<void>}
+     */
     async createPrediction() {
       this.loading = true;
       let response = await new CSGORestClient().createPrediction(this.team1, this.team2, this.mode);
@@ -346,10 +353,18 @@
       this.loading = false;
     }
 
+    /**
+     * reroute the user where he came from
+     */
     goBack() {
       this.$router.back();
     }
 
+    /**
+     * watch which team was selected and update its stats
+     * @returns {Promise<void>}
+     * @private
+     */
     @Watch("team1Selection", {immediate: true, deep: true})
     async __watchTeam1Selection() {
       if (this.team1Selection !== null) {
@@ -360,6 +375,11 @@
       }
     }
 
+    /**
+     * watch which team was selected and update its stats
+     * @returns {Promise<void>}
+     * @private
+     */
     @Watch("team2Selection", {immediate: true, deep: true})
     async __watchTeam2Selection() {
       if (this.team2Selection !== null) {

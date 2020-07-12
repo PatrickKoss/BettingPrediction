@@ -17,6 +17,7 @@ from csgo_api.models import MatchResult, Match, Team
 
 class GetUpcomingMatches(APIView):
     def get(self, request):
+        """return all upcoming matches. Matches need to start later than now"""
         check, json_message, response_status = check_authorization(request)
         if check:
             message = Message("success", f"CSGO Upcoming Matches")
@@ -33,22 +34,26 @@ class GetUpcomingMatches(APIView):
 
 class GetMatchResult(APIView):
     def get(self, request):
+        """return the result of the matches"""
         check, json_message, response_status = check_authorization(request)
         if check:
             message = Message("success", f"CSGO Match Results")
             matches_result = MatchResult.objects.all().order_by("-date")
+            # if there are no matches in the database then return an empty array
             if len(matches_result) == 0:
                 json_rep = json.dumps({'message': message.repr_json(), 'matchResult': []},
                                       cls=ComplexEncoder)
                 json_rep = json.loads(json_rep)
                 return Response(json_rep, status=response_status)
             upcoming_matches = Match.objects.all().order_by("-date")
+            # create pandas data frame to merge upcoming matches and result matches on certain attributes
             df_matches_result = pd.DataFrame(list(matches_result.values()))
             df_upcoming_matches = pd.DataFrame(list(upcoming_matches.values()))
             df_upcoming_matches.drop(columns=["id"], inplace=True)
             df_matches_result.drop(columns=["id"], inplace=True)
             df_result = df_matches_result.merge(df_upcoming_matches, left_on=["Team_1_id", "Team_2_id", "date"],
                                                 right_on=["Team_1_id", "Team_2_id", "date"], how="inner")
+            # convert strings to float type
             df_result["team_1_win"] = df_result["team_1_win"].astype(float)
             df_result["team_2_win"] = df_result["team_2_win"].astype(float)
             df_result["odds_team_1"] = df_result["odds_team_1"].astype(float)
@@ -56,7 +61,9 @@ class GetMatchResult(APIView):
             df_result["team_1_confidence"] = df_result["team_1_confidence"].astype(float)
             df_result["team_2_confidence"] = df_result["team_2_confidence"].astype(float)
             df_result["prediction_svm"] = df_result["prediction_svm"].astype(float)
+            # convert data frame to dict
             result = df_result.to_dict('records')
+            # modify dict for correct values
             for d in result:
                 match = upcoming_matches.filter(date=d["date"], Team_1_id=d["Team_1_id"],
                                                 Team_2_id=d["Team_2_id"]).first()
@@ -73,11 +80,13 @@ class GetMatchResult(APIView):
 
 class GetMatchResultStats(APIView):
     def get(self, request):
+        """return json of stats that the model produces"""
         check, json_message, response_status = check_authorization(request)
         if check:
             message = Message("success", f"CSGO Match Results")
             matches_result = MatchResult.objects.all()
             upcoming_matches = Match.objects.all()
+            # create pandas data frame for faster computation
             df_matches_result = pd.DataFrame(list(matches_result.values()))
             df_upcoming_matches = pd.DataFrame(list(upcoming_matches.values()))
             df_upcoming_matches.drop(columns=["id"], inplace=True)
@@ -85,7 +94,7 @@ class GetMatchResultStats(APIView):
             df_result = df_matches_result.merge(df_upcoming_matches, left_on=["Team_1_id", "Team_2_id", "date"],
                                                 right_on=["Team_1_id", "Team_2_id", "date"], how="inner")
             # df_result = df_result[(df_result["odds_team_1"] <= 4.5) & (df_result["odds_team_2"] <= 4.5)]
-            # first set odds, sec threshold,
+            # create the result dicts
             result = []
             self.create_result_list(df_result, result, False)
             self.create_result_list(df_result, result, False, "BO1")
@@ -105,20 +114,24 @@ class GetMatchResultStats(APIView):
             return Response(json_message, status=response_status)
 
     def get_df_with_threshold(self, df, threshold):
+        """method returns a data frame with confidence over a certain threshold"""
         return df[((df["team_1_confidence"] > threshold) & (df["team_1_confidence"] >= df["team_2_confidence"])) | (
           (df["team_2_confidence"] > threshold) & (df["team_2_confidence"] >
                                                    df["team_1_confidence"]))]
 
-    def get_df_with_money(self, df, odd_reduction=0):
-        df["money"] = df.apply(lambda row: (float(row.odds_team_1) - 1 - odd_reduction) if row.team_1_win == 1
-                                                                                           and row.team_1_confidence >= row.team_2_confidence
-        else (float(
-            row.odds_team_2) - 1) if row.team_2_win == 1 and row.team_1_confidence < row.team_2_confidence else -1,
-                               axis=1)
+    def get_df_with_money(self, df):
+        """method returns a data frame exact as the given data frame but with a money column. This columns returns the
+        money of a bet. If the model was correct then the return is the odds - 1 else it is -1"""
+        df["money"] = df.apply(
+            lambda row: (float(row.odds_team_1) - 1) if row.team_1_win == 1
+                                                        and row.team_1_confidence >= row.team_2_confidence
+            else (float(
+                row.odds_team_2) - 1) if row.team_2_win == 1 and row.team_1_confidence < row.team_2_confidence else -1,
+            axis=1)
         return df
 
     def get_roi(self, df):
-        """return the total roi"""
+        """return the total roi of the model"""
         return round(float((df["money"].sum()) / len(df)), 2)
 
     def get_accuracy(self, df):
@@ -129,66 +142,76 @@ class GetMatchResultStats(APIView):
         """return a data frame with a given odds threshold"""
         return df[(df["odds_team_1"] >= odds) & (df["odds_team_2"] >= odds)]
 
-    def get_df_with_money_svm(self, df, odd_reduction=0):
+    def get_df_with_money_svm(self, df):
         """return a data frame with the money made on a bet"""
-        df["money"] = df.apply(lambda row: (float(row.odds_team_1) - 1 - odd_reduction) if row.team_1_win == 1
-                                                                           and row.prediction_svm == 0
-        else (float(row.odds_team_2) - 1) if row.team_2_win == 1 and row.prediction_svm == 1 else -1,
-                               axis=1)
+        df["money"] = df.apply(
+            lambda row: (float(row.odds_team_1) - 1) if row.team_1_win == 1
+                                                        and row.prediction_svm == 0
+            else (float(
+                row.odds_team_2) - 1) if row.team_2_win == 1 and row.prediction_svm == 1 else -1,
+            axis=1)
         return df
 
-    def get_average_odds(self, df, odd_reduction=0):
+    def get_average_odds(self, df):
         """This method calculates the average odds of all bets"""
         filter_team_1_df = df[df["team_1_win"] == 1]
         result_array = np.array([filter_team_1_df["odds_team_1"]])
         filter_team_2_df = df[df["team_2_win"] == 1]
         result_array = np.concatenate((result_array, np.array([filter_team_2_df["odds_team_2"]])), axis=1)
-        average_odds = sum(result_array[0]) / len(result_array[0])
-        average_odds = round(round(float(average_odds), 2) - odd_reduction, 2)
+        average_odds = sum(result_array[0]) / len(result_array[0] if len(result_array[0]) > 0 else 1)
+        average_odds = round(float(average_odds), 2)
         return average_odds
 
+    def get_average_winning_odds(self, df):
+        """return the average winning odds of the model."""
+        filtered_df = df[df["money"] > 0]
+        winnings_array = np.array(filtered_df["money"])
+        average_winning_odds = sum(winnings_array) / len(winnings_array) if len(winnings_array) > 0 else 1
+        return round(float(average_winning_odds) + 1, 2)
+
     def create_result_list(self, df_result, result, svm, mode=None):
+        """method returns a result list of dicts"""
         df_copy = df_result.copy()
         if mode is not None:
             df_copy = df_result[df_result["mode"] == mode]
         for odd in np.arange(1, 1.9, 0.1):
-            for odd_reduction in np.arange(0, 0.5, 0.1):
-                odd = round(odd, 2)
-                odd_reduction = round(odd_reduction, 2)
-                if not svm:
-                    df = self.get_df_with_threshold(df_copy, 0.5001)
-                else:
-                    df = df_copy.copy()
-                df = self.get_df_odds_threshold(df, odd)
-                if len(df) == 0:
-                    continue
-                if svm:
-                    df = self.get_df_with_money_svm(df, odd_reduction)
-                else:
-                    df = self.get_df_with_money(df, odd_reduction)
-                if len(df) == 0:
-                    continue
-                if len(df) < len(df_result) * 0.3:
-                    continue
-                roi = self.get_roi(df)
-                average_odds = self.get_average_odds(df, odd_reduction)
-                if mode is None:
-                    mode_selected = "all games"
-                else:
-                    mode_selected = mode
-                if svm:
-                    model = "SVM"
-                else:
-                    model = "NN"
-                result.append(
-                    {"accuracy": self.get_accuracy(df),
-                     "roi": roi, "sampleSize": len(df), "averageOdds": average_odds, "svm": model,
-                     "mode": mode_selected,
-                     "odds": odd, "odds_reduction": odd_reduction})
+            odd = round(odd, 2)
+            if not svm:
+                df = self.get_df_with_threshold(df_copy, 0.5001)
+            else:
+                df = df_copy.copy()
+            df = self.get_df_odds_threshold(df, odd)
+            if len(df) == 0:
+                continue
+            if svm:
+                df = self.get_df_with_money_svm(df)
+            else:
+                df = self.get_df_with_money(df)
+            if len(df) == 0:
+                continue
+            # if len(df) < len(df_result) * 0.2:
+            #     continue
+            roi = self.get_roi(df)
+            average_odds = self.get_average_odds(df)
+            average_winning_odds = self.get_average_winning_odds(df)
+            if mode is None:
+                mode_selected = "all games"
+            else:
+                mode_selected = mode
+            if svm:
+                model = "SVM"
+            else:
+                model = "NN"
+            result.append(
+                {"accuracy": self.get_accuracy(df),
+                 "roi": roi, "sampleSize": len(df), "averageOdds": average_odds, "svm": model,
+                 "mode": mode_selected,
+                 "odds": odd, "average_winning_odds": average_winning_odds})
 
 
 class GetTeam(APIView):
     def get(self, request, id):
+        """return the team given by an id"""
         check, json_message, response_status = check_authorization(request)
         if check:
             message = Message("success", f"Here is the Team")
@@ -210,6 +233,7 @@ class GetTeam(APIView):
 
 class GetTeams(APIView):
     def get(self, request):
+        """return all teams"""
         check, json_message, response_status = check_authorization(request)
         if check:
             message = Message("success", f"Here are the teams")
@@ -227,26 +251,32 @@ class GetTeams(APIView):
 
 class CreatePrediction(APIView):
     def post(self, request):
+        """make a prediction on two given teams"""
         check, json_message, response_status = check_authorization(request)
         if check:
             data = json.loads(request.body or "{}")
+            # check if the teams are correct
             check_teams, response = self.check_teams(data)
             if not check_teams:
                 return response
+            # check if the players are correct
             check_player_team_1, response = self.check_players_in_team(data, "team_1")
             if not check_player_team_1:
                 return response
             check_player_team_2, response = self.check_players_in_team(data, "team_1")
             if not check_player_team_2:
                 return response
+            # check if a single player is correct
             check_players, response = self.check_players(data)
             if not check_players:
                 return response
+            # check if the values are correct
             validate_data, response = self.validate_data(data)
             if not validate_data:
                 return response
 
             message = Message("success", f"Prediction")
+            # create a prediction array and make a prediction
             prediction_array = np.array([[data["team_1"]["winning_percentage"]]])
             prediction_array = np.concatenate((prediction_array,
                                                self.get_team_player_array(data["team_1"]["Player_1"],
@@ -268,6 +298,7 @@ class CreatePrediction(APIView):
             # else:
             #     prediction_model = settings.PREDICTION_MODEL_BO3_WINS
             #     prediction_model_svm = settings.PREDICTION_MODEL_SVM_BO3_WINS
+            # get the right model
             prediction_model = settings.PREDICTION_MODEL_ALL_WINS
             prediction_model_svm = settings.PREDICTION_MODEL_SVM_ALL_WINS
 
@@ -289,9 +320,11 @@ class CreatePrediction(APIView):
             return Response(json_message, status=response_status)
 
     def get_player_stats_array(self, player):
+        """returns a numpy array of player stats"""
         return np.array([[player["dpr"], player["kast"], player["impact"], player["adr"], player["kpr"]]])
 
     def get_team_player_array(self, player1, player2, player3, player4, player5):
+        """return a numpy array of team stats"""
         team_player_array = self.get_player_stats_array(player1)
         team_player_array = np.concatenate((team_player_array, self.get_player_stats_array(player2)), axis=1)
         team_player_array = np.concatenate((team_player_array, self.get_player_stats_array(player3)), axis=1)
@@ -299,6 +332,7 @@ class CreatePrediction(APIView):
         return np.concatenate((team_player_array, self.get_player_stats_array(player5)), axis=1)
 
     def check_teams(self, data):
+        """checks if a team is in the data sent"""
         if "team_1" not in data or "team_2" not in data:
             message = Message("error", f"No teams sent")
             json_rep = json.dumps({'message': message.repr_json()}, cls=ComplexEncoder)
@@ -308,6 +342,7 @@ class CreatePrediction(APIView):
             return True, ""
 
     def check_players_in_team(self, data, team):
+        """checks if players are sent in the data"""
         if "Player_1" not in data[team] or "Player_2" not in data[team] or "Player_3" not in data[
             team] or "Player_4" not in data[team] or "Player_5" not in data[team]:
             message = Message(f"error", f"No player for {team} sent")
@@ -318,6 +353,7 @@ class CreatePrediction(APIView):
             return True, ""
 
     def check_players(self, data):
+        """checks if the players has the right attributes in the data sent"""
         team_list = ["team_1", "team_2"]
         player_list = ["Player_1", "Player_2", "Player_3", "Player_4", "Player_5"]
         for team in team_list:
@@ -332,6 +368,7 @@ class CreatePrediction(APIView):
                     return True, ""
 
     def validate_data(self, data):
+        """check if the data attributes are in the correct value range"""
         team_list = ["team_1", "team_2"]
         player_list = ["Player_1", "Player_2", "Player_3", "Player_4", "Player_5"]
         for team in team_list:
@@ -403,12 +440,14 @@ class CreatePrediction(APIView):
         return True, ""
 
     def get_error_message_player_stat(self, stat, player):
+        """get a error message when the attribute is not a correct type"""
         message = Message(f"error", f"{stat} of {player} is not of type float")
         json_rep = json.dumps({'message': message.repr_json()}, cls=ComplexEncoder)
         json_rep = json.loads(json_rep)
         return json_rep
 
     def get_error_message_player_stat_in_range(self, stat, player, range_1, range_2):
+        """get a error message when the stat is not in the correct value range"""
         message = Message(f"error", f"{stat} of {player} is not in range {range_1} and {range_2}")
         json_rep = json.dumps({'message': message.repr_json()}, cls=ComplexEncoder)
         json_rep = json.loads(json_rep)
@@ -417,5 +456,6 @@ class CreatePrediction(APIView):
 
 class CheckPermissions(APIView):
     def get(self, request):
+        """checks if the user sent has the right permissions to get the data"""
         _, json_message, response_status = check_authorization(request)
         return Response(json_message, status=response_status)

@@ -37,18 +37,22 @@
       align: 'start',
       sortable: true,
       value: 'averageOdds'
-    }, {text: "Odds", align: 'start', sortable: true, value: 'odds'}, {
-      text: "Odds Reduction",
+    }, {
+      text: "Average Winning Odds",
       align: 'start',
       sortable: true,
-      value: 'odds_reduction'
-    }, {
+      value: 'average_winning_odds'
+    }, {text: "Odds", align: 'start', sortable: true, value: 'odds'}, {
       text: "Sample Size",
       align: 'start',
       sortable: true,
       value: 'sampleSize'
     }];
 
+    /**
+     * do the init logic. Basically get the data
+     * @returns {Promise<void>}
+     */
     async mounted() {
       this.loading = true;
       let responseStats = await new CSGORestClient().getMatchesResultStats();

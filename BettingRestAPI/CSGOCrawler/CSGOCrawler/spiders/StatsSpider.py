@@ -121,10 +121,13 @@ class StatsSpider(scrapy.Spider):
                 yield scrapy.Request(url="https://www.hltv.org" + ttm["team2_link"], callback=self.parse_team)
 
     def parse_team(self, response):
-        # get start and end date
-        start_date, end_date = self.get_dates_from_response(response)
         # get winning percentage
         wins_losses = response.css(".large-strong::text").extract()
+        # check if the team has played more than 10 games
+        if (int(wins_losses[1].split("/")[0]) + int(wins_losses[1].split("/")[-1])) < 10:
+            return
+        # get start and end date
+        start_date, end_date = self.get_dates_from_response(response)
         winning_percentage = int(wins_losses[1].split("/")[0]) / ((
                                                                     int(wins_losses[1].split("/")[0]) + int(
                                                                       wins_losses[1].split("/")[-1])) if int(

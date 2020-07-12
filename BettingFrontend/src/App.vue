@@ -43,7 +43,13 @@
   class App extends Vue {
     state = this.$store.state;
 
+    /**
+     * set some data when the App is created and check authentication
+     * @returns {Promise<void>}
+     */
     async created() {
+      // set the state dark according to the local storage dark
+      this.state.dark = localStorage.dark === 'true';
       // set the state token according to the local storage token
       if (localStorage.token !== undefined) this.state.token = localStorage.token;
       let response = await new UserRestClient().getAuthenticated();
@@ -53,12 +59,6 @@
       } else {
         this.state.user = response.user;
       }
-
-      // set the state dark according to the local storage dark
-      this.state.dark = localStorage.dark === 'true';
-
-      // trick the login mistake
-      await new UserRestClient().login({username: "", email:"", password:""});
     }
   }
 

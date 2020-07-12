@@ -12,6 +12,13 @@ import {UserRestClient} from "../model/UserRestClient";
 
 Vue.use(VueRouter);
 
+/**
+ * method checks if a user has the right permissions and if not reroute the user.
+ * @param next
+ * @param response
+ * @param from
+ * @returns {Promise<void>}
+ */
 async function checkPermissions(next, response, from) {
   if (response.status === 401) {
     AppStore.state.message = response.message;

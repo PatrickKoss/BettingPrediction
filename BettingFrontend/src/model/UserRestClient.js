@@ -5,6 +5,10 @@ import store from "../store/index"
 export class UserRestClient {
 
   api = config.apiEndpoint;
+
+  /**
+   * set the right api endpoint
+   */
   constructor() {
     if (process.env.NODE_ENV !== "development") {
       this.api = config.apiEndpointProduction

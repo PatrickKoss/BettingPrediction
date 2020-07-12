@@ -6,7 +6,7 @@
       />
     </v-row>
     <v-row no-gutters v-if="team !== null">
-      <v-col :sm="5.9">
+      <v-col :sm="6">
         <h2>Team: {{team.name}}</h2>
         <v-row no-gutters style="margin-left: 10px; margin-top: 15px">
           <label>
@@ -22,7 +22,7 @@
           />
         </v-row>
       </v-col>
-      <v-col :sm="5.9" v-if="team2 !== null">
+      <v-col :sm="6" v-if="team2 !== null">
         <h2>Team: {{team2.name}}</h2>
         <v-row no-gutters style="margin-left: 10px; margin-top: 15px">
           <label>
@@ -77,20 +77,27 @@
       value: 'kast'
     }];
 
+    /**
+     * do the init logic
+     */
     async mounted() {
       this.loadingTeams = true;
       let id = this.$route.params.id;
       let id2 = null;
+      // check if id is in the route params
       if ("id2" in this.$route.params) {
         id2 = this.$route.params.id2;
       }
+      // get the team for the id
       let response = await new CSGORestClient().getTeam(id);
       this.team = response.team;
+      // set the players and transform their kast value
       this.playerItems = [this.team.Player_1, this.team.Player_2, this.team.Player_3, this.team.Player_4, this.team.Player_5];
       this.playerItems.forEach(player => {
         player.kast = (player.kast * 100) + "%";
       });
       if (id2 !== null) {
+        // do the same as previous with id 1
         let response = await new CSGORestClient().getTeam(id2);
         this.team2 = response.team;
         this.playerItems2 = [this.team2.Player_1, this.team2.Player_2, this.team2.Player_3, this.team2.Player_4, this.team2.Player_5];
@@ -101,6 +108,9 @@
       this.loadingTeams = false;
     }
 
+    /**
+     * reroute to where the user came from
+     */
     goBack() {
       this.$router.back();
     }
