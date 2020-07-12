@@ -42,7 +42,7 @@
       align: 'start',
       sortable: true,
       value: 'average_winning_odds'
-    }, {text: "Odds", align: 'start', sortable: true, value: 'odds'}, {
+    }, {text: " Model picked Odds higher than", align: 'start', sortable: true, value: 'odds'}, {
       text: "Sample Size",
       align: 'start',
       sortable: true,

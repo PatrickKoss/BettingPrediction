@@ -115,20 +115,26 @@ class GetMatchResultStats(APIView):
 
     def get_df_with_threshold(self, df, threshold):
         """method returns a data frame with confidence over a certain threshold"""
-        return df[((df["team_1_confidence"] > threshold) & (df["team_1_confidence"] >= df["team_2_confidence"])) | (
-          (df["team_2_confidence"] > threshold) & (df["team_2_confidence"] >
-                                                   df["team_1_confidence"]))]
+        return df[((df["odds_team_1"] > threshold) & (df["team_1_confidence"] >= df["team_2_confidence"])) | (
+          (df["odds_team_2"] > threshold) & (df["team_2_confidence"] >
+                                             df["team_1_confidence"]))]
+
+    def get_df_with_threshold_svm(self, df, threshold):
+        """method returns a data frame with confidence over a certain threshold"""
+        return df[((df["odds_team_1"] > threshold) & (df["prediction_svm"] == 0)) | (
+          (df["odds_team_2"] > threshold) & (df["prediction_svm"] == 1))]
 
     def get_df_with_money(self, df):
         """method returns a data frame exact as the given data frame but with a money column. This columns returns the
         money of a bet. If the model was correct then the return is the odds - 1 else it is -1"""
-        df["money"] = df.apply(
+        copy_df = df.copy()
+        copy_df["money"] = df.apply(
             lambda row: (float(row.odds_team_1) - 1) if row.team_1_win == 1
                                                         and row.team_1_confidence >= row.team_2_confidence
             else (float(
                 row.odds_team_2) - 1) if row.team_2_win == 1 and row.team_1_confidence < row.team_2_confidence else -1,
             axis=1)
-        return df
+        return copy_df
 
     def get_roi(self, df):
         """return the total roi of the model"""
@@ -144,13 +150,14 @@ class GetMatchResultStats(APIView):
 
     def get_df_with_money_svm(self, df):
         """return a data frame with the money made on a bet"""
-        df["money"] = df.apply(
+        copy_df = df.copy()
+        copy_df["money"] = df.apply(
             lambda row: (float(row.odds_team_1) - 1) if row.team_1_win == 1
                                                         and row.prediction_svm == 0
             else (float(
                 row.odds_team_2) - 1) if row.team_2_win == 1 and row.prediction_svm == 1 else -1,
             axis=1)
-        return df
+        return copy_df
 
     def get_average_odds(self, df):
         """This method calculates the average odds of all bets"""
@@ -177,10 +184,9 @@ class GetMatchResultStats(APIView):
         for odd in np.arange(1, 1.9, 0.1):
             odd = round(odd, 2)
             if not svm:
-                df = self.get_df_with_threshold(df_copy, 0.5001)
+                df = self.get_df_with_threshold(df_copy, odd)
             else:
-                df = df_copy.copy()
-            df = self.get_df_odds_threshold(df, odd)
+                df = self.get_df_with_threshold_svm(df_copy, odd)
             if len(df) == 0:
                 continue
             if svm:
