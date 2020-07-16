@@ -24,6 +24,13 @@ class GetUpcomingMatches(APIView):
             upcoming_matches = Match.objects.filter(
                 date__range=(datetime.now(), datetime.now() + timedelta(days=15))).order_by("date")
             upcoming_matches = MatchSerializer(upcoming_matches, context={'request': request}, many=True).data
+            for match in upcoming_matches:
+                match.update({
+                    "nnPickedTeam": match["Team_1"]["name"] if match["team_1_confidence"] >= match["team_2_confidence"]
+                    else match["Team_2"]["name"]})
+                match.update({
+                    "svmPickedTeam": match["Team_1"]["name"] if float(match["prediction_svm"]) == 0 else match["Team_2"][
+                        "name"]})
             json_rep = json.dumps({'message': message.repr_json(), 'upcoming_matches': upcoming_matches},
                                   cls=ComplexEncoder)
             json_rep = json.loads(json_rep)
@@ -69,7 +76,13 @@ class GetMatchResult(APIView):
                                                 Team_2_id=d["Team_2_id"]).first()
                 team_1_name = match.Team_1.name
                 team_2_name = match.Team_2.name
-                d.update({"Team1": team_1_name, "Team2": team_2_name, "date": d["date"].isoformat()})
+                winning_team = team_1_name if d["team_1_win"] else team_2_name
+                nn_picked_team = team_1_name if d["team_1_confidence"] >= d[
+                    "team_2_confidence"] else team_2_name
+                svm_picked_team = team_1_name if float(d["prediction_svm"]) == 0 else team_2_name
+                d.update({"Team1": team_1_name, "Team2": team_2_name, "date": d["date"].isoformat(),
+                          "nnPickedTeam": nn_picked_team, "svmPickedTeam": svm_picked_team,
+                          "winningTeam": winning_team})
             json_rep = json.dumps({'message': message.repr_json(), 'matchResult': result},
                                   cls=ComplexEncoder)
             json_rep = json.loads(json_rep)
@@ -93,17 +106,21 @@ class GetMatchResultStats(APIView):
             df_matches_result.drop(columns=["id"], inplace=True)
             df_result = df_matches_result.merge(df_upcoming_matches, left_on=["Team_1_id", "Team_2_id", "date"],
                                                 right_on=["Team_1_id", "Team_2_id", "date"], how="inner")
+            df_result["prediction_svm"] = df_result["prediction_svm"].astype(float)
             # df_result = df_result[(df_result["odds_team_1"] <= 4.5) & (df_result["odds_team_2"] <= 4.5)]
             # create the result dicts
             result = []
             self.create_result_list(df_result, result, False)
-            self.create_result_list(df_result, result, False, "BO1")
-            self.create_result_list(df_result, result, False, "BO3")
+            self.create_result_list(df_result, result, False, mode="BO1")
+            self.create_result_list(df_result, result, False, mode="BO3")
             self.create_result_list(df_result, result, True)
-            self.create_result_list(df_result, result, True, "BO1")
-            self.create_result_list(df_result, result, True, "BO3")
+            self.create_result_list(df_result, result, True, mode="BO1")
+            self.create_result_list(df_result, result, True, mode="BO3")
+            self.create_result_list(df_result, result, True, nn=True)
+            self.create_result_list(df_result, result, True, mode="BO1", nn=True)
+            self.create_result_list(df_result, result, True, mode="BO3", nn=True)
 
-            result = sorted(result, key=lambda k: k["sampleSize"], reverse=True)
+            result = sorted(result, key=lambda k: k["odds"], reverse=False)
 
             json_rep = json.dumps({'message': message.repr_json(),
                                    'stats': result},
@@ -136,6 +153,25 @@ class GetMatchResultStats(APIView):
             axis=1)
         return copy_df
 
+    def get_df_with_money_svm(self, df):
+        """return a data frame with the money made on a bet"""
+        copy_df = df.copy()
+        copy_df["money"] = df.apply(
+            lambda row: (float(row.odds_team_1) - 1) if row.team_1_win == 1
+                                                        and row.prediction_svm == 0
+            else (float(
+                row.odds_team_2) - 1) if row.team_2_win == 1 and row.prediction_svm == 1 else -1,
+            axis=1)
+        return copy_df
+
+    def get_filtered_df_nn_svm(self, df):
+        """return a data frame with the money made on a bet"""
+        copy_df = df.copy()
+        copy_df = copy_df[
+            (copy_df["team_1_confidence"] > copy_df["team_2_confidence"]) & (copy_df["prediction_svm"] == 0) | (
+                  copy_df["team_2_confidence"] > copy_df["team_1_confidence"]) & (copy_df["prediction_svm"] == 1)]
+        return copy_df
+
     def get_roi(self, df):
         """return the total roi of the model"""
         return round(float((df["money"].sum()) / len(df)), 2)
@@ -147,17 +183,6 @@ class GetMatchResultStats(APIView):
     def get_df_odds_threshold(self, df, odds):
         """return a data frame with a given odds threshold"""
         return df[(df["odds_team_1"] >= odds) & (df["odds_team_2"] >= odds)]
-
-    def get_df_with_money_svm(self, df):
-        """return a data frame with the money made on a bet"""
-        copy_df = df.copy()
-        copy_df["money"] = df.apply(
-            lambda row: (float(row.odds_team_1) - 1) if row.team_1_win == 1
-                                                        and row.prediction_svm == 0
-            else (float(
-                row.odds_team_2) - 1) if row.team_2_win == 1 and row.prediction_svm == 1 else -1,
-            axis=1)
-        return copy_df
 
     def get_average_odds(self, df):
         """This method calculates the average odds of all bets"""
@@ -176,22 +201,28 @@ class GetMatchResultStats(APIView):
         average_winning_odds = sum(winnings_array) / len(winnings_array) if len(winnings_array) > 0 else 1
         return round(float(average_winning_odds) + 1, 2)
 
-    def create_result_list(self, df_result, result, svm, mode=None):
+    def create_result_list(self, df_result, result, svm, nn=False, mode=None):
         """method returns a result list of dicts"""
         df_copy = df_result.copy()
         if mode is not None:
             df_copy = df_result[df_result["mode"] == mode]
         for odd in np.arange(1, 1.9, 0.1):
             odd = round(odd, 2)
-            if not svm:
+            if not svm and not nn:
                 df = self.get_df_with_threshold(df_copy, odd)
-            else:
+            elif not nn:
                 df = self.get_df_with_threshold_svm(df_copy, odd)
+            else:
+                df = self.get_df_with_threshold(df_copy, odd)
+                df = self.get_df_with_threshold_svm(df, odd)
             if len(df) == 0:
                 continue
-            if svm:
+            if svm and not nn:
                 df = self.get_df_with_money_svm(df)
+            elif not nn:
+                df = self.get_df_with_money(df)
             else:
+                df = self.get_filtered_df_nn_svm(df)
                 df = self.get_df_with_money(df)
             if len(df) == 0:
                 continue
@@ -204,10 +235,12 @@ class GetMatchResultStats(APIView):
                 mode_selected = "all games"
             else:
                 mode_selected = mode
-            if svm:
+            if svm and not nn:
                 model = "SVM"
-            else:
+            elif not nn:
                 model = "NN"
+            else:
+                model = "NSM"
             result.append(
                 {"accuracy": self.get_accuracy(df),
                  "roi": roi, "sampleSize": len(df), "averageOdds": average_odds, "svm": model,

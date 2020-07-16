@@ -2,12 +2,22 @@
   <v-card :dark="state.dark">
     <v-card-title>
       <v-spacer></v-spacer>
+      <v-text-field
+              append-icon="mdi-magnify"
+              hide-details
+              label="Search"
+              single-line
+              v-model="statisticSearch"
+      />
     </v-card-title>
     <v-data-table
             :headers="statsHeader"
             :items="itemsStats"
             :items-per-page="15"
             :loading="loading"
+            multi-sort
+            :sort-desc="[false, true]"
+            :search="statisticSearch"
     />
   </v-card>
 </template>
@@ -21,6 +31,7 @@
     state = this.$store.state;
     itemsStats = [];
     loading = false;
+    statisticSearch = "";
 
     statsHeader = [{text: "Mode", align: 'start', sortable: true, value: 'mode'}, {
       text: "Model",

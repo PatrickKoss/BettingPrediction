@@ -16,6 +16,8 @@
             :items-per-page="10"
             :search="matchResultSearch"
             :loading="loading"
+            multi-sort
+            :sort-desc="[false, true]"
     >
       <template v-slot:body="{ items }">
         <tbody>
@@ -27,10 +29,9 @@
           <td>{{ item.mode }}</td>
           <td>{{ item.odds_team_1 }}</td>
           <td>{{ item.odds_team_2 }}</td>
-          <td>{{ item.team_1_confidence }}</td>
-          <td>{{ item.team_2_confidence }}</td>
-          <td>{{item.team_1_win}}</td>
-          <td>{{item.team_2_win}}</td>
+          <td>{{ item.nnPickedTeam }}</td>
+          <td>{{ item.svmPickedTeam }}</td>
+          <td>{{item.winningTeam}}</td>
         </tr>
         </tbody>
       </template>
@@ -65,21 +66,21 @@
       sortable: true,
       value: 'odds_team_1'
     }, {text: "Odds Team 2", align: 'start', sortable: true, value: 'odds_team_2'}, {
-      text: "Confidence Team 1",
+      text: "NN Picked Team",
       align: 'start',
       sortable: true,
-      value: 'team_1_confidence'
+      value: 'nnPickedTeam'
     }, {
-      text: "Confidence Team 2",
+      text: "SVM Picked Team",
       align: 'start',
       sortable: true,
-      value: 'team_2_confidence'
+      value: 'svmPickedTeam'
     }, {
-      text: "Team 1 Win",
+      text: "Winning Team",
       align: 'start',
       sortable: true,
-      value: 'team_1_win'
-    }, {text: "Team 2 Win", align: 'start', sortable: true, value: 'team_2_win'}];
+      value: 'winningTeam'
+    }];
 
     async mounted() {
       this.loading = true;
@@ -106,4 +107,7 @@
   export default CSGOMatchesResultTable
 </script>
 <style scoped>
+  td {
+    text-align: left;
+  }
 </style>
