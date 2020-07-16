@@ -66,9 +66,15 @@ class TestUpcomingMatches(APITestCase):
             team.save()
         match = mommy.make("Match", date=(datetime.now() + timedelta(days=1)))
         match.save()
+        match = MatchSerializer(match).data
+        match.update({
+            "nnPickedTeam": match["Team_1"]["name"] if match["team_1_confidence"] >= match["team_2_confidence"]
+            else match["Team_2"]["name"]})
+        match.update({
+            "svmPickedTeam": match["Team_1"]["name"] if float(match["prediction_svm"]) == 0 else match["Team_2"][
+                "name"]})
         self.client.headers.update({"Authorization": self.admin_token.key})
         response = self.client.get('http://127.0.0.1:8000/csgo/upcomingMatches/')
-        match = MatchSerializer(match).data
         self.assertEqual(response.json()["upcoming_matches"][0], match)
 
     def test_one_past_one_present(self):
@@ -82,9 +88,15 @@ class TestUpcomingMatches(APITestCase):
         match_1.save()
         match_2 = mommy.make("Match", date=(datetime.now() - timedelta(days=1)))
         match_2.save()
+        match_1 = MatchSerializer(match_1).data
+        match_1.update({
+            "nnPickedTeam": match_1["Team_1"]["name"] if match_1["team_1_confidence"] >= match_1["team_2_confidence"]
+            else match_1["Team_2"]["name"]})
+        match_1.update({
+            "svmPickedTeam": match_1["Team_1"]["name"] if float(match_1["prediction_svm"]) == 0 else match_1["Team_2"][
+                "name"]})
         self.client.headers.update({"Authorization": self.admin_token.key})
         response = self.client.get('http://127.0.0.1:8000/csgo/upcomingMatches/')
-        match_1 = MatchSerializer(match_1).data
         self.assertEqual(response.json()["upcoming_matches"], [match_1])
 
     def test_4_present_matches(self):
@@ -99,13 +111,20 @@ class TestUpcomingMatches(APITestCase):
             match.save()
         match_2 = mommy.make("Match", date=(datetime.now() - timedelta(days=1)))
         match_2.save()
+        match_1 = MatchSerializer(match_1, many=True).data
+        for match in match_1:
+            match.update({
+                "nnPickedTeam": match["Team_1"]["name"] if match["team_1_confidence"] >= match["team_2_confidence"]
+                else match["Team_2"]["name"]})
+            match.update({
+                "svmPickedTeam": match["Team_1"]["name"] if float(match["prediction_svm"]) == 0 else match["Team_2"][
+                    "name"]})
         self.client.headers.update({"Authorization": self.admin_token.key})
         response = self.client.get('http://127.0.0.1:8000/csgo/upcomingMatches/')
-        match_1 = MatchSerializer(match_1, many=True).data
         self.assertEqual(response.json()["upcoming_matches"], match_1)
 
 
-class test_match_result(APITestCase):
+class TestMatchResult(APITestCase):
     def setUp(self):
         if not User.objects.filter(username='User1').exists():
             self.admin = User.objects.create_superuser(username="User1", password="secretPW", email="user1@gmail.com")
@@ -130,6 +149,12 @@ class test_match_result(APITestCase):
         match_result = mommy.make("MatchResult", date=match["date"])
         match_result.save()
         match_result = MatchResultSerializer(match_result).data
+        team_1_name = match["Team_1"]["name"]
+        team_2_name = match["Team_2"]["name"]
+        winning_team = match["Team_1"]["name"] if float(match_result["team_1_win"]) == 1 else team_2_name
+        nn_picked_team = team_1_name if match["team_1_confidence"] >= match[
+            "team_2_confidence"] else team_2_name
+        svm_picked_team = team_1_name if float(match["prediction_svm"]) == 0 else team_2_name
         combined = {"date": match["date"], "Team_1_id": match["Team_1"]["id"], "Team_2_id": match["Team_2"]["id"],
                     "team_1_win": float(match_result["team_1_win"]),
                     "team_2_win": float(match_result["team_2_win"]),
@@ -138,7 +163,8 @@ class test_match_result(APITestCase):
                     "team_2_confidence": float(match["team_2_confidence"]),
                     "prediction_svm": float(match["prediction_svm"]),
                     "mode": match["mode"],
-                    "Team1": match["Team_1"]["name"], "Team2": match["Team_2"]["name"]}
+                    "Team1": match["Team_1"]["name"], "Team2": match["Team_2"]["name"], "nnPickedTeam": nn_picked_team,
+                    "svmPickedTeam": svm_picked_team, "winningTeam": winning_team}
         self.client.headers.update({"Authorization": self.admin_token.key})
         response = self.client.get('http://127.0.0.1:8000/csgo/matchResult/')
         self.assertEqual(response.json()["matchResult"][0], combined)
@@ -370,11 +396,11 @@ class TestPredictionStats(APITestCase):
         self.team_2 = TeamSerializer(team_2).data
         today = datetime.now()
         upcoming_match = mommy.make("Match", odds_team_1=1, odds_team_2=1, team_1_confidence=1, team_2_confidence=0,
-                                  prediction_svm=0, _quantity=15, date=today)
+                                    prediction_svm=0, _quantity=15, date=today)
         for match in upcoming_match:
             match.save()
         upcoming_match = mommy.make("Match", odds_team_1=1, odds_team_2=1, team_1_confidence=0, team_2_confidence=1,
-                                  prediction_svm=1, _quantity=5, date=today)
+                                    prediction_svm=1, _quantity=5, date=today)
         for match in upcoming_match:
             match.save()
         match_result = mommy.make("MatchResult", team_1_win=1, team_2_win=2, date=today, _quantity=20)

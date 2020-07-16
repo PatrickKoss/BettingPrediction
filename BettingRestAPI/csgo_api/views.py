@@ -76,7 +76,7 @@ class GetMatchResult(APIView):
                                                 Team_2_id=d["Team_2_id"]).first()
                 team_1_name = match.Team_1.name
                 team_2_name = match.Team_2.name
-                winning_team = team_1_name if d["team_1_win"] else team_2_name
+                winning_team = team_1_name if float(d["team_1_win"]) == 1 else team_2_name
                 nn_picked_team = team_1_name if d["team_1_confidence"] >= d[
                     "team_2_confidence"] else team_2_name
                 svm_picked_team = team_1_name if float(d["prediction_svm"]) == 0 else team_2_name
