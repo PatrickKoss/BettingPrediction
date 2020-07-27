@@ -79,6 +79,7 @@
       if (responseUpcomingMatches.message.messageType !== "error") {
         for (let i = 0; i < this.itemsUpcomingMatches.length; i++) {
           let date = new Date(Date.parse(this.itemsUpcomingMatches[i].date));
+          date.setHours(date.getHours() - 2);
           this.itemsUpcomingMatches[i].date = date.toLocaleString();
         }
       }

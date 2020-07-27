@@ -12,7 +12,7 @@ django.setup()
 
 from csgo_api.models import Team, Match
 from dateutil import parser
-from datetime import datetime
+from datetime import datetime, timedelta
 import keras
 import numpy as np
 
@@ -65,7 +65,7 @@ class MatchesSpider(scrapy.Spider):
         match_date = parser.parse(match_date).date()
         match_date = datetime.strptime(f"{match_date.day}-{match_date.month}-{match_date.year} {match_time}",
                                        "%d-%m-%Y %H:%M")
-        if match_date < datetime.now():
+        if match_date < datetime.now() - timedelta(hours=2):
             return
 
         mode = response.meta["mode"]

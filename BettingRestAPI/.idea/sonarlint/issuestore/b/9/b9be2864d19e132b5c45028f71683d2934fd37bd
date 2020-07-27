@@ -1,0 +1,6 @@
+
+‚python:S11926"jDefine a constant instead of duplicating this literal 'http://127.0.0.1:8000/user/authenticated/' 3 times.(¬¥ì¾
+mpython:S1192J"PDefine a constant instead of duplicating this literal "user2@gmail.com" 3 times.(å½ Éøÿÿÿÿ
+python:S1192"bDefine a constant instead of duplicating this literal 'http://127.0.0.1:8000/user/login/' 3 times.(ùêÉ«üÿÿÿÿ
+hpython:S1192R"PDefine a constant instead of duplicating this literal "user3@gmail.com" 3 times.(µ–¬à
+mpython:S1192"PDefine a constant instead of duplicating this literal "user1@gmail.com" 6 times.(²©×Úøÿÿÿÿ

@@ -89,6 +89,7 @@
       if (responseMatchesResult.message.messageType !== "error") {
         for (let i = 0; i < this.itemsMatchResult.length; i++) {
           let date = new Date(Date.parse(this.itemsMatchResult[i].date));
+          date.setHours(date.getHours() - 2);
           this.itemsMatchResult[i].date = date.toLocaleString();
         }
       }
