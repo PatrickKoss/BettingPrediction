@@ -54,6 +54,8 @@ services:
   image: "postgres"
   environment:
    - "POSTGRES_HOST_AUTH_METHOD=trust"
+   - "POSTGRES_PASSWORD=test"
+   - "POSTGRES_USER=postgres"
   volumes:
    - postgres_data:/var/lib/postgresql/data/
 

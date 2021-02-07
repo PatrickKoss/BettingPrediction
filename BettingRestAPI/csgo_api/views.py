@@ -1,9 +1,10 @@
 import json
 from datetime import datetime, timedelta
+from threading import Thread
 
 import numpy as np
-import pandas as pd
 from django.conf import settings
+from django.db import connection
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,7 +13,7 @@ from BettingRestAPI.Helper.CSGOHelper import check_authorization
 from BettingRestAPI.Serializer.CSGOSerializer import MatchSerializer, TeamSerializer, TeamsPredictionSerializer
 from BettingRestAPI.Serializer.Encoder import ComplexEncoder
 from BettingRestAPI.utils.Message import Message
-from csgo_api.models import MatchResult, Match, Team
+from csgo_api.models import Match, Team
 
 
 class GetUpcomingMatches(APIView):
@@ -29,7 +30,8 @@ class GetUpcomingMatches(APIView):
                     "nnPickedTeam": match["Team_1"]["name"] if match["team_1_confidence"] >= match["team_2_confidence"]
                     else match["Team_2"]["name"]})
                 match.update({
-                    "svmPickedTeam": match["Team_1"]["name"] if float(match["prediction_svm"]) == 0 else match["Team_2"][
+                    "svmPickedTeam": match["Team_1"]["name"] if float(match["prediction_svm"]) == 0 else
+                    match["Team_2"][
                         "name"]})
             json_rep = json.dumps({'message': message.repr_json(), 'upcoming_matches': upcoming_matches},
                                   cls=ComplexEncoder)
@@ -44,49 +46,30 @@ class GetMatchResult(APIView):
         """return the result of the matches"""
         check, json_message, response_status = check_authorization(request)
         if check:
-            message = Message("success", f"CSGO Match Results")
-            matches_result = MatchResult.objects.all().order_by("-date")
-            # if there are no matches in the database then return an empty array
-            if len(matches_result) == 0:
-                json_rep = json.dumps({'message': message.repr_json(), 'matchResult': []},
-                                      cls=ComplexEncoder)
-                json_rep = json.loads(json_rep)
-                return Response(json_rep, status=response_status)
-            upcoming_matches = Match.objects.all().order_by("-date")
-            # create pandas data frame to merge upcoming matches and result matches on certain attributes
-            df_matches_result = pd.DataFrame(list(matches_result.values()))
-            df_upcoming_matches = pd.DataFrame(list(upcoming_matches.values()))
-            df_upcoming_matches.drop(columns=["id"], inplace=True)
-            df_matches_result.drop(columns=["id"], inplace=True)
-            df_result = df_matches_result.merge(df_upcoming_matches, left_on=["Team_1_id", "Team_2_id", "date"],
-                                                right_on=["Team_1_id", "Team_2_id", "date"], how="inner")
-            # convert strings to float type
-            df_result["team_1_win"] = df_result["team_1_win"].astype(float)
-            df_result["team_2_win"] = df_result["team_2_win"].astype(float)
-            df_result["odds_team_1"] = df_result["odds_team_1"].astype(float)
-            df_result["odds_team_2"] = df_result["odds_team_2"].astype(float)
-            df_result["team_1_confidence"] = df_result["team_1_confidence"].astype(float)
-            df_result["team_2_confidence"] = df_result["team_2_confidence"].astype(float)
-            df_result["prediction_svm"] = df_result["prediction_svm"].astype(float)
-            # convert data frame to dict
-            result = df_result.to_dict('records')
-            # modify dict for correct values
-            for d in result:
-                match = upcoming_matches.filter(date=d["date"], Team_1_id=d["Team_1_id"],
-                                                Team_2_id=d["Team_2_id"]).first()
-                team_1_name = match.Team_1.name
-                team_2_name = match.Team_2.name
-                winning_team = team_1_name if float(d["team_1_win"]) == 1 else team_2_name
-                nn_picked_team = team_1_name if d["team_1_confidence"] >= d[
-                    "team_2_confidence"] else team_2_name
-                svm_picked_team = team_1_name if float(d["prediction_svm"]) == 0 else team_2_name
-                d.update({"Team1": team_1_name, "Team2": team_2_name, "date": d["date"].isoformat(),
-                          "nnPickedTeam": nn_picked_team, "svmPickedTeam": svm_picked_team,
-                          "winningTeam": winning_team})
-            json_rep = json.dumps({'message': message.repr_json(), 'matchResult': result},
-                                  cls=ComplexEncoder)
-            json_rep = json.loads(json_rep)
-            return Response(json_rep, status=response_status)
+            with connection.cursor() as cursor:
+                cursor.execute(f"select m.Team_1_id, m.Team_2_id, DATE(m.date) as date , m.team_1_win, m.team_2_win, "
+                               f"m.odds_team_1, m.odds_team_2, m.team_1_confidence, m.team_2_confidence, m.prediction_svm, "
+                               f"m.name as Team1, t.name as Team2, m.mode, "
+                               f"CASE m.team_1_confidence >= m.team_2_confidence WHEN TRUE THEN m.name ELSE t.name END AS nnPickedTeam, "
+                               f"CASE m.prediction_svm = 0 WHEN TRUE THEN m.name ELSE t.name END AS svmPickedTeam, "
+                               f"CASE m.team_1_win = 1 WHEN TRUE THEN m.name ELSE t.name END AS winningTeam "
+                               f"FROM (SELECT name, id FROM csgo_api_team) as t INNER JOIN ("
+                               f"select m.Team_1_id, m.Team_2_id, m.date, m.team_1_win, m.team_2_win, "
+                               f"m.odds_team_1, m.odds_team_2, m.team_1_confidence, m.team_2_confidence, m.prediction_svm, t.name, m.mode "
+                               f"FROM (SELECT name, id FROM csgo_api_team) as t INNER JOIN ("
+                               f"select m.Team_1_id, m.Team_2_id, m.date, mr.team_1_win, mr.team_2_win, "
+                               f"m.odds_team_1, m.odds_team_2, m.team_1_confidence, m.team_2_confidence, m.prediction_svm, m.mode "
+                               f"From csgo_api_matchResult as mr "
+                               f"INNER JOIN csgo_api_match as m "
+                               f"ON mr.Team_1_id = m.Team_1_id AND mr.Team_2_id = m.Team_2_id AND m.date = mr.date"
+                               f") as m "
+                               f"ON t.id = m.Team_1_id"
+                               f") as m "
+                               f"ON t.id = m.Team_2_id")
+                columns = [col[0] for col in cursor.description]
+                res = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return Response({'message': {"message": "fine", "messageType": "success"}, 'matchResult': res},
+                            status=response_status)
         else:
             return Response(json_message, status=response_status)
 
@@ -96,156 +79,117 @@ class GetMatchResultStats(APIView):
         """return json of stats that the model produces"""
         check, json_message, response_status = check_authorization(request)
         if check:
-            message = Message("success", f"CSGO Match Results")
-            matches_result = MatchResult.objects.all()
-            upcoming_matches = Match.objects.all()
-            # create pandas data frame for faster computation
-            df_matches_result = pd.DataFrame(list(matches_result.values()))
-            df_upcoming_matches = pd.DataFrame(list(upcoming_matches.values()))
-            df_upcoming_matches.drop(columns=["id"], inplace=True)
-            df_matches_result.drop(columns=["id"], inplace=True)
-            df_result = df_matches_result.merge(df_upcoming_matches, left_on=["Team_1_id", "Team_2_id", "date"],
-                                                right_on=["Team_1_id", "Team_2_id", "date"], how="inner")
-            df_result["prediction_svm"] = df_result["prediction_svm"].astype(float)
-            # df_result = df_result[(df_result["odds_team_1"] <= 4.5) & (df_result["odds_team_2"] <= 4.5)]
-            # create the result dicts
-            result = []
-            self.create_result_list(df_result, result, False)
-            self.create_result_list(df_result, result, False, mode="BO1")
-            self.create_result_list(df_result, result, False, mode="BO3")
-            self.create_result_list(df_result, result, True)
-            self.create_result_list(df_result, result, True, mode="BO1")
-            self.create_result_list(df_result, result, True, mode="BO3")
-            self.create_result_list(df_result, result, True, nn=True)
-            self.create_result_list(df_result, result, True, mode="BO1", nn=True)
-            self.create_result_list(df_result, result, True, mode="BO3", nn=True)
-
-            result = sorted(result, key=lambda k: k["odds"], reverse=False)
-
-            json_rep = json.dumps({'message': message.repr_json(),
-                                   'stats': result},
-                                  cls=ComplexEncoder)
-            json_rep = json.loads(json_rep)
-            return Response(json_rep, status=response_status)
+            result_list = []
+            # multi threading is about 4 times faster than single threaded
+            threads = [None] * 9
+            results = [None] * 54
+            threads_all = [None] * 9
+            results_all = [None] * 18
+            index_threads = 0
+            index_results = 0
+            index_threads_all = 0
+            index_results_all = 0
+            for odd in np.arange(1, 1.9, 0.1):
+                odd = round(odd, 2)
+                threads[index_threads] = Thread(target=self.get_query_dict_groups, args=(odd, results, index_results))
+                threads[index_threads].start()
+                index_threads += 1
+                index_results += 6
+                threads_all[index_threads_all] = Thread(target=self.get_query_dict_all,
+                                                        args=(odd, results_all, index_results_all))
+                threads_all[index_threads_all].start()
+                index_threads_all += 1
+                index_results_all += 2
+            for i in range(len(threads)):
+                threads[i].join()
+            for i in range(len(threads_all)):
+                threads_all[i].join()
+            results = results + results_all
+            results = sorted(results, key=lambda k: k["odds"])
+            return Response({'message': {"message": "fine", "messageType": "success"}, 'stats': results},
+                            status=response_status)
         else:
             return Response(json_message, status=response_status)
 
-    def get_df_with_threshold(self, df, threshold):
-        """method returns a data frame with confidence over a certain threshold"""
-        return df[((df["odds_team_1"] > threshold) & (df["team_1_confidence"] >= df["team_2_confidence"])) | (
-          (df["odds_team_2"] > threshold) & (df["team_2_confidence"] >
-                                             df["team_1_confidence"]))]
+    def get_query_dict_groups(self, odd, results, index):
+        with connection.cursor() as cursor:
+            cursor.execute("select COUNT(id) as sampleSize, round(SUM(NN_Money)/COUNT(id),2) as roi_nn, "
+                           "round(SUM(SVM_Money)/COUNT(id),2) as roi_svm, mode, "
+                           "round(SUM(odds)/COUNT(id),2) as average_odds, "
+                           "round(SUM(CASE NN_Money > 0 WHEN TRUE THEN NN_Money END)/COUNT(CASE NN_Money > 0 WHEN TRUE THEN NN_Money END)+1,2) as nn_winning_odds, "
+                           "round(SUM(CASE SVM_Money > 0 WHEN TRUE THEN SVM_Money END)/COUNT(CASE SVM_Money > 0 WHEN TRUE THEN SVM_Money END)+1,2) as svm_winning_odds, "
+                           "round(CAST(COUNT(CASE NN_Money > 0 WHEN TRUE THEN NN_Money END) as double)/CAST(COUNT(id) as double),2) as nn_accuracy, "
+                           "round(CAST(COUNT(CASE SVM_Money > 0 WHEN TRUE THEN SVM_Money END) as double)/CAST(COUNT(id) as double),2) as svm_accuracy "
+                           "FROM ("
+                           f"select mr.id as id, m.mode as mode, "
+                           f"CASE "
+                           f"WHEN mr.team_1_win = 1 AND m.team_1_confidence >= m.team_2_confidence THEN m.odds_team_1 - 1 "
+                           f"WHEN mr.team_2_win = 1 AND m.team_1_confidence < m.team_2_confidence THEN m.odds_team_2 - 1 "
+                           f"ELSE -1 END AS NN_Money,"
+                           f"CASE "
+                           f"WHEN mr.team_1_win = 1 AND m.prediction_svm = 0 THEN m.odds_team_1 - 1 "
+                           f"WHEN mr.team_2_win = 1 AND m.prediction_svm = 1 THEN m.odds_team_2 - 1 "
+                           f"ELSE -1 END AS SVM_Money, "
+                           f"CASE "
+                           f"WHEN mr.team_1_win = 1 THEN m.odds_team_1 "
+                           f"WHEN mr.team_2_win = 1 THEN m.odds_team_2 "
+                           f"ELSE 1 END AS odds "
+                           f"From csgo_api_matchResult as mr "
+                           f"INNER JOIN csgo_api_match as m "
+                           f"ON mr.Team_1_id = m.Team_1_id AND mr.Team_2_id = m.Team_2_id AND m.date = mr.date "
+                           f"WHERE m.odds_team_1 >= %s and m.odds_team_2 >= %s) "
+                           f"GROUP BY mode", [odd, odd])
 
-    def get_df_with_threshold_svm(self, df, threshold):
-        """method returns a data frame with confidence over a certain threshold"""
-        return df[((df["odds_team_1"] > threshold) & (df["prediction_svm"] == 0)) | (
-          (df["odds_team_2"] > threshold) & (df["prediction_svm"] == 1))]
+            columns = [col[0] for col in cursor.description]
 
-    def get_df_with_money(self, df):
-        """method returns a data frame exact as the given data frame but with a money column. This columns returns the
-        money of a bet. If the model was correct then the return is the odds - 1 else it is -1"""
-        copy_df = df.copy()
-        copy_df["money"] = df.apply(
-            lambda row: (float(row.odds_team_1) - 1) if row.team_1_win == 1
-                                                        and row.team_1_confidence >= row.team_2_confidence
-            else (float(
-                row.odds_team_2) - 1) if row.team_2_win == 1 and row.team_1_confidence < row.team_2_confidence else -1,
-            axis=1)
-        return copy_df
+            res = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            for r in res:
+                results[index] = {'accuracy': r["svm_accuracy"], 'roi': r["roi_svm"], 'sampleSize': r["sampleSize"],
+                                  'averageOdds': r["average_odds"], 'svm': "SVM",
+                                  'mode': r["mode"], 'odds': odd, 'average_winning_odds': r["svm_winning_odds"]}
+                results[index + 1] = {'accuracy': r["nn_accuracy"], 'roi': r["roi_nn"], 'sampleSize': r["sampleSize"],
+                                      'averageOdds': r["average_odds"], 'svm': "NN",
+                                      'mode': r["mode"], 'odds': odd, 'average_winning_odds': r["nn_winning_odds"]}
+                index += 2
 
-    def get_df_with_money_svm(self, df):
-        """return a data frame with the money made on a bet"""
-        copy_df = df.copy()
-        copy_df["money"] = df.apply(
-            lambda row: (float(row.odds_team_1) - 1) if row.team_1_win == 1
-                                                        and row.prediction_svm == 0
-            else (float(
-                row.odds_team_2) - 1) if row.team_2_win == 1 and row.prediction_svm == 1 else -1,
-            axis=1)
-        return copy_df
-
-    def get_filtered_df_nn_svm(self, df):
-        """return a data frame with the money made on a bet"""
-        copy_df = df.copy()
-        copy_df = copy_df[
-            (copy_df["team_1_confidence"] > copy_df["team_2_confidence"]) & (copy_df["prediction_svm"] == 0) | (
-                  copy_df["team_2_confidence"] > copy_df["team_1_confidence"]) & (copy_df["prediction_svm"] == 1)]
-        return copy_df
-
-    def get_roi(self, df):
-        """return the total roi of the model"""
-        return round(float((df["money"].sum()) / len(df)), 2)
-
-    def get_accuracy(self, df):
-        """return the total accuracy. Every money entry that made money"""
-        return round(float(len(df[df["money"] >= 0]) / len(df)), 2)
-
-    def get_df_odds_threshold(self, df, odds):
-        """return a data frame with a given odds threshold"""
-        return df[(df["odds_team_1"] >= odds) & (df["odds_team_2"] >= odds)]
-
-    def get_average_odds(self, df):
-        """This method calculates the average odds of all bets"""
-        filter_team_1_df = df[df["team_1_win"] == 1]
-        result_array = np.array([filter_team_1_df["odds_team_1"]])
-        filter_team_2_df = df[df["team_2_win"] == 1]
-        result_array = np.concatenate((result_array, np.array([filter_team_2_df["odds_team_2"]])), axis=1)
-        average_odds = sum(result_array[0]) / len(result_array[0] if len(result_array[0]) > 0 else 1)
-        average_odds = round(float(average_odds), 2)
-        return average_odds
-
-    def get_average_winning_odds(self, df):
-        """return the average winning odds of the model."""
-        filtered_df = df[df["money"] > 0]
-        winnings_array = np.array(filtered_df["money"])
-        average_winning_odds = sum(winnings_array) / len(winnings_array) if len(winnings_array) > 0 else 1
-        return round(float(average_winning_odds) + 1, 2)
-
-    def create_result_list(self, df_result, result, svm, nn=False, mode=None):
-        """method returns a result list of dicts"""
-        df_copy = df_result.copy()
-        if mode is not None:
-            df_copy = df_result[df_result["mode"] == mode]
-        for odd in np.arange(1, 1.9, 0.1):
-            odd = round(odd, 2)
-            if not svm and not nn:
-                df = self.get_df_with_threshold(df_copy, odd)
-            elif not nn:
-                df = self.get_df_with_threshold_svm(df_copy, odd)
-            else:
-                df = self.get_df_with_threshold(df_copy, odd)
-                df = self.get_df_with_threshold_svm(df, odd)
-            if len(df) == 0:
-                continue
-            if svm and not nn:
-                df = self.get_df_with_money_svm(df)
-            elif not nn:
-                df = self.get_df_with_money(df)
-            else:
-                df = self.get_filtered_df_nn_svm(df)
-                df = self.get_df_with_money(df)
-            if len(df) == 0:
-                continue
-            # if len(df) < len(df_result) * 0.2:
-            #     continue
-            roi = self.get_roi(df)
-            average_odds = self.get_average_odds(df)
-            average_winning_odds = self.get_average_winning_odds(df)
-            if mode is None:
-                mode_selected = "all games"
-            else:
-                mode_selected = mode
-            if svm and not nn:
-                model = "SVM"
-            elif not nn:
-                model = "NN"
-            else:
-                model = "NSM"
-            result.append(
-                {"accuracy": self.get_accuracy(df),
-                 "roi": roi, "sampleSize": len(df), "averageOdds": average_odds, "svm": model,
-                 "mode": mode_selected,
-                 "odds": odd, "average_winning_odds": average_winning_odds})
+    def get_query_dict_all(self, odd, results, index):
+        with connection.cursor() as cursor:
+            cursor.execute("select COUNT(id) as sampleSize, round(SUM(NN_Money)/COUNT(id),2) as roi_nn, "
+                           "round(SUM(SVM_Money)/COUNT(id),2) as roi_svm, mode, "
+                           "round(SUM(odds)/COUNT(id),2) as average_odds, "
+                           "round(SUM(CASE NN_Money > 0 WHEN TRUE THEN NN_Money END)/COUNT(CASE NN_Money > 0 WHEN TRUE THEN NN_Money END)+1,2) as nn_winning_odds, "
+                           "round(SUM(CASE SVM_Money > 0 WHEN TRUE THEN SVM_Money END)/COUNT(CASE SVM_Money > 0 WHEN TRUE THEN SVM_Money END)+1,2) as svm_winning_odds, "
+                           "round(CAST(COUNT(CASE NN_Money > 0 WHEN TRUE THEN NN_Money END) as double)/CAST(COUNT(id) as double),2) as nn_accuracy, "
+                           "round(CAST(COUNT(CASE SVM_Money > 0 WHEN TRUE THEN SVM_Money END) as double)/CAST(COUNT(id) as double),2) as svm_accuracy "
+                           "FROM ("
+                           f"select mr.id as id, m.mode as mode, "
+                           f"CASE "
+                           f"WHEN mr.team_1_win = 1 AND m.team_1_confidence >= m.team_2_confidence THEN m.odds_team_1 - 1 "
+                           f"WHEN mr.team_2_win = 1 AND m.team_1_confidence < m.team_2_confidence THEN m.odds_team_2 - 1 "
+                           f"ELSE -1 END AS NN_Money,"
+                           f"CASE "
+                           f"WHEN mr.team_1_win = 1 AND m.prediction_svm = 0 THEN m.odds_team_1 - 1 "
+                           f"WHEN mr.team_2_win = 1 AND m.prediction_svm = 1 THEN m.odds_team_2 - 1 "
+                           f"ELSE -1 END AS SVM_Money, "
+                           f"CASE "
+                           f"WHEN mr.team_1_win = 1 THEN m.odds_team_1 "
+                           f"WHEN mr.team_2_win = 1 THEN m.odds_team_2 "
+                           f"ELSE 1 END AS odds "
+                           f"From csgo_api_matchResult as mr "
+                           f"INNER JOIN csgo_api_match as m "
+                           f"ON mr.Team_1_id = m.Team_1_id AND mr.Team_2_id = m.Team_2_id AND m.date = mr.date "
+                           f"WHERE m.odds_team_1 >= %s and m.odds_team_2 >= %s) "
+                           f"", [odd, odd])
+            columns = [col[0] for col in cursor.description]
+            res = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            for r in res:
+                results[index] = {'accuracy': r["svm_accuracy"], 'roi': r["roi_svm"], 'sampleSize': r["sampleSize"],
+                                  'averageOdds': r["average_odds"], 'svm': "SVM",
+                                  'mode': "all games", 'odds': odd, 'average_winning_odds': r["svm_winning_odds"]}
+                results[index + 1] = {'accuracy': r["nn_accuracy"], 'roi': r["roi_nn"], 'sampleSize': r["sampleSize"],
+                                      'averageOdds': r["average_odds"], 'svm': "NN",
+                                      'mode': "all games", 'odds': odd, 'average_winning_odds': r["nn_winning_odds"]}
+                index += 2
 
 
 class GetTeam(APIView):

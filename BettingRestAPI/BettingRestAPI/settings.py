@@ -54,10 +54,7 @@ if platform == "win32":
 SECRET_KEY = '-$wkg1iw9f=2(2s6b2buh@w+c6-%mhjv9aripua2b&m@uj_iqd'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if len(sys.argv) >= 2 and sys.argv[1] == 'runserver':
-    DEBUG = True
-else:
-    DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 CORS_ORIGIN_ALLOW_ALL = True
@@ -129,40 +126,24 @@ WSGI_APPLICATION = 'BettingRestAPI.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+if (len(sys.argv) >= 2 and sys.argv[1] == 'test') or platform == "win32":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
     }
-}
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'postgres',
-#         'USER': 'postgres',
-#         'HOST': 'db',  # set in docker-compose.yml
-#         'PORT': 5432  # default postgres port
-#     }
-# }
-
-# if len(sys.argv) >= 2 and sys.argv[1] == 'runserver':
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#         }
-#     }
-# else:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'postgres',
-#             'USER': 'postgres',
-#             'HOST': 'db',  # set in docker-compose.yml
-#             'PORT': 5432  # default postgres port
-#         }
-#     }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get("DB_NAME", 'postgres'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'HOST': os.environ.get('DB_HOST', 'db'),  # set in docker-compose.yml
+            'PORT': os.environ.get('DB_PORT', 5432),  # default postgres port
+            'PASSWORD': os.environ.get("DB_PASSWORD", "")
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
