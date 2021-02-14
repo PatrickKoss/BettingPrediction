@@ -67,6 +67,10 @@ cd BettingRestAPI && python manage.py runserver
 ````
 docker-compose up -d --build
 ````
+6.(Optional) Load sample data
+````
+cd BettingRestAPI && python manage.py loaddata db_prod.json
+````
 
 ## Tests
 ````
