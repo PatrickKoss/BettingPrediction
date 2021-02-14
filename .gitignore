@@ -2,3 +2,6 @@
 ./BettingFrontend/.idea/*
 ./BettingRestAPI/.idea/*
 ./BettingRestAPI/.coverage
+.idea
+BettingRestAPI/.idea
+BettingFrontend/.idea
