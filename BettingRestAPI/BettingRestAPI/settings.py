@@ -11,11 +11,12 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-import tensorflow as tf
-import keras
 import pickle
-from sys import platform
 import sys
+from sys import platform
+
+import keras
+import tensorflow as tf
 
 # Make sure to always run these 4 lines because tensorflow is giving errors if not
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.8))
@@ -54,7 +55,7 @@ if platform == "win32":
 SECRET_KEY = '-$wkg1iw9f=2(2s6b2buh@w+c6-%mhjv9aripua2b&m@uj_iqd'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 CORS_ORIGIN_ALLOW_ALL = True
@@ -84,6 +85,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_yasg',
     'csgo_api.apps.CsgoApiConfig',
     'user.apps.UserConfig',
     'rest_framework',
@@ -94,6 +96,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -181,3 +184,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

@@ -105,7 +105,8 @@ class GetMatchResultStats(APIView):
             for i in range(len(threads_all)):
                 threads_all[i].join()
             results = results + results_all
-            results = sorted(results, key=lambda k: k["odds"])
+            if None not in results:
+                results = sorted(results, key=lambda k: k["odds"])
             return Response({'message': {"message": "fine", "messageType": "success"}, 'stats': results},
                             status=response_status)
         else:

@@ -7,22 +7,13 @@ export class UserRestClient {
   api = config.apiEndpoint;
 
   /**
-   * set the right api endpoint
-   */
-  constructor() {
-    if (process.env.NODE_ENV !== "development") {
-      this.api = config.apiEndpointProduction
-    }
-  }
-
-  /**
    * login the user
    * @param user
    * @returns {Promise<T>}
    */
   async login(user) {
     try {
-      return (await axios.post(`${this.api}/user/login/`, user)).data;
+      return (await axios.post(`${this.api}/users/login/`, user)).data;
     } catch (error) {
       return {message: error.response.data.message, status: error.response.status};
     }
@@ -35,7 +26,7 @@ export class UserRestClient {
   async logout() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
-      return (await axios.post(`${this.api}/user/logout/`)).data;
+      return (await axios.post(`${this.api}/users/logout/`)).data;
     } catch (error) {
       return {message: error.response.data.message, status: error.response.status};
     }
@@ -48,7 +39,7 @@ export class UserRestClient {
   async getAuthenticated() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
-      return (await axios.get(`${this.api}/user/authenticated/`)).data;
+      return (await axios.get(`${this.api}/users/authenticated/`)).data;
     } catch (error) {
       return {message: error.response.data.message, status: error.response.status};
     }
@@ -61,7 +52,7 @@ export class UserRestClient {
    */
   async register(user) {
     try {
-      return (await axios.post(`${this.api}/user/register/`, user)).data;
+      return (await axios.post(`${this.api}/users/`, user)).data;
     } catch (error) {
       return {message: error.response.data.message, status: error.response.status};
     }
@@ -71,9 +62,9 @@ export class UserRestClient {
    * delete a user
    * @returns {Promise<T>}
    */
-  async deleteUser() {
+  async deleteUser(id) {
     axios.defaults.headers.common['Authorization'] = store.state.token;
-    return (await axios.post(`${this.api}/user/delete/`)).data;
+    return (await axios.delete(`${this.api}/users/${id}/`)).data;
   }
 
   /**
@@ -83,6 +74,6 @@ export class UserRestClient {
    */
   async updateUser(user) {
     axios.defaults.headers.common['Authorization'] = store.state.token;
-    return (await axios.post(`${this.api}/user/update/`, user)).data;
+    return (await axios.put(`${this.api}/users/`, user)).data;
   }
 }

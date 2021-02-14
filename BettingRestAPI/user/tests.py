@@ -14,16 +14,16 @@ class TestLogin(APITestCase):
         self.maxDiff = None
 
     def test_empty(self):
-        response = self.client.post('http://127.0.0.1:8000/user/login/')
+        response = self.client.post('http://127.0.0.1:8000/users/login/')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_wrong_authentication(self):
-        response = self.client.post('http://127.0.0.1:8000/user/login/',
+        response = self.client.post('http://127.0.0.1:8000/users/login/',
                                     json={"username": "wrong", "password": "wrongPW"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_valid(self):
-        response = self.client.post('http://127.0.0.1:8000/user/login/',
+        response = self.client.post('http://127.0.0.1:8000/users/login/',
                                     json={"username": "User1", "password": "secretPW"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -38,7 +38,7 @@ class TestLogout(APITestCase):
 
     def test_logout(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post('http://127.0.0.1:8000/user/logout/')
+        response = self.client.post('http://127.0.0.1:8000/users/logout/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
@@ -51,17 +51,17 @@ class TestGetAuthenticated(APITestCase):
         self.maxDiff = None
 
     def test_no_authentication_sent(self):
-        response = self.client.get('http://127.0.0.1:8000/user/authenticated/')
+        response = self.client.get('http://127.0.0.1:8000/users/authenticated/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_wrong_authentication_sent(self):
         self.client.headers.update({"Authorization": "asdf"})
-        response = self.client.get('http://127.0.0.1:8000/user/authenticated/')
+        response = self.client.get('http://127.0.0.1:8000/users/authenticated/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_correct_authentication(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.get('http://127.0.0.1:8000/user/authenticated/')
+        response = self.client.get('http://127.0.0.1:8000/users/authenticated/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
@@ -78,13 +78,13 @@ class TestRegister(APITestCase):
 
     def test_no_permission(self):
         self.client.headers.update({"Authorization": self.normal_user_token.key})
-        response = self.client.post('http://127.0.0.1:8000/user/register/',
+        response = self.client.post('http://127.0.0.1:8000/users/',
                                     json={"username": "User3", "password": "secretPW", "email": "user3@gmail.com"})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_valid(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post('http://127.0.0.1:8000/user/register/',
+        response = self.client.post('http://127.0.0.1:8000/users/',
                                     json={"username": "User3", "password": "secretPW", "email": "user3@gmail.com"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -105,17 +105,17 @@ class TestDeleteUser(APITestCase):
 
     def test_no_permission(self):
         self.client.headers.update({"Authorization": self.normal_user_token.key})
-        response = self.client.delete(f'http://127.0.0.1:8000/user/delete/{self.delete_user.id}')
+        response = self.client.delete(f'http://127.0.0.1:8000/users/{self.delete_user.id}')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_valid(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.delete(f'http://127.0.0.1:8000/user/delete/{self.delete_user.id}')
+        response = self.client.delete(f'http://127.0.0.1:8000/users/{self.delete_user.id}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_no_user_to_delete(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.delete(f'http://127.0.0.1:8000/user/delete/100')
+        response = self.client.delete(f'http://127.0.0.1:8000/users/100')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
@@ -132,23 +132,23 @@ class TestUpdateUser(APITestCase):
 
     def test_valid(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/user/update/',
+        response = self.client.put(f'http://127.0.0.1:8000/users/',
                                     json={"username": "Admin", "password": "password", "email": "email@gmail.com"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_no_data_sent(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/user/update/')
+        response = self.client.put(f'http://127.0.0.1:8000/users/')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_one_attribute_not_sent(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/user/update/',
+        response = self.client.put(f'http://127.0.0.1:8000/users/',
                                     json={"username": "Admin", "password": "password"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_user_already_exist(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/user/update/',
+        response = self.client.put(f'http://127.0.0.1:8000/users/',
                                     json={"username": "User2", "password": "password", "email": "email@gmail.com"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -102,8 +102,9 @@
      * delete the account
      * @returns {Promise<void>}
      */
-    async deleteAccount() {
-      this.state.message = await new UserRestClient().deleteUser();
+    async deleteAccount(id) {
+      // TODO add the right id
+      this.state.message = await new UserRestClient().deleteUser(id);
       if (this.state.message.messageType === "success") {
         // reset the data in store and local store
         store.state.user = {username: "", email: ""};

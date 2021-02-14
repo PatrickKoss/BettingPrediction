@@ -25,22 +25,22 @@ class CheckPermissions(APITestCase):
         self.maxDiff = None
 
     def test_no_authentication_sent(self):
-        response = self.client.get('http://127.0.0.1:8000/csgo/checkPermissions/')
+        response = self.client.get('http://127.0.0.1:8000/csgo/check-permissions/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_wrong_authentication_sent(self):
         self.client.headers.update({"Authorization": "asdfasdf"})
-        response = self.client.get('http://127.0.0.1:8000/csgo/checkPermissions/')
+        response = self.client.get('http://127.0.0.1:8000/csgo/check-permissions/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_no_permission(self):
         self.client.headers.update({"Authorization": self.logged_in_token.key})
-        response = self.client.get('http://127.0.0.1:8000/csgo/checkPermissions/')
+        response = self.client.get('http://127.0.0.1:8000/csgo/check-permissions/')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_right_permission(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.get('http://127.0.0.1:8000/csgo/checkPermissions/')
+        response = self.client.get('http://127.0.0.1:8000/csgo/check-permissions/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
@@ -54,7 +54,7 @@ class TestUpcomingMatches(APITestCase):
 
     def test_empty(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.get('http://127.0.0.1:8000/csgo/upcomingMatches/')
+        response = self.client.get('http://127.0.0.1:8000/csgo/upcoming-matches/')
         self.assertEqual(response.json()["upcoming_matches"], [])
 
     def test_single_valid(self):
@@ -74,7 +74,7 @@ class TestUpcomingMatches(APITestCase):
             "svmPickedTeam": match["Team_1"]["name"] if float(match["prediction_svm"]) == 0 else match["Team_2"][
                 "name"]})
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.get('http://127.0.0.1:8000/csgo/upcomingMatches/')
+        response = self.client.get('http://127.0.0.1:8000/csgo/upcoming-matches/')
         self.assertEqual(response.json()["upcoming_matches"][0], match)
 
     def test_one_past_one_present(self):
@@ -96,7 +96,7 @@ class TestUpcomingMatches(APITestCase):
             "svmPickedTeam": match_1["Team_1"]["name"] if float(match_1["prediction_svm"]) == 0 else match_1["Team_2"][
                 "name"]})
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.get('http://127.0.0.1:8000/csgo/upcomingMatches/')
+        response = self.client.get('http://127.0.0.1:8000/csgo/upcoming-matches/')
         self.assertEqual(response.json()["upcoming_matches"], [match_1])
 
     def test_4_present_matches(self):
@@ -120,7 +120,7 @@ class TestUpcomingMatches(APITestCase):
                 "svmPickedTeam": match["Team_1"]["name"] if float(match["prediction_svm"]) == 0 else match["Team_2"][
                     "name"]})
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.get('http://127.0.0.1:8000/csgo/upcomingMatches/')
+        response = self.client.get('http://127.0.0.1:8000/csgo/upcoming-matches/')
         self.assertEqual(response.json()["upcoming_matches"], match_1)
 
 
@@ -134,7 +134,7 @@ class TestMatchResult(APITestCase):
 
     def test_empty(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.get('http://127.0.0.1:8000/csgo/matchResult/')
+        response = self.client.get('http://127.0.0.1:8000/csgo/results/')
         self.assertEqual(response.json()["matchResult"], [])
 
     def test_valid(self):
@@ -148,26 +148,9 @@ class TestMatchResult(APITestCase):
         match = MatchSerializer(match).data
         match_result = mommy.make("MatchResult", date=match["date"])
         match_result.save()
-        match_result = MatchResultSerializer(match_result).data
-        team_1_name = match["Team_1"]["name"]
-        team_2_name = match["Team_2"]["name"]
-        winning_team = match["Team_1"]["name"] if float(match_result["team_1_win"]) == 1 else team_2_name
-        nn_picked_team = team_1_name if match["team_1_confidence"] >= match[
-            "team_2_confidence"] else team_2_name
-        svm_picked_team = team_1_name if float(match["prediction_svm"]) == 0 else team_2_name
-        combined = {"date": match["date"], "Team_1_id": match["Team_1"]["id"], "Team_2_id": match["Team_2"]["id"],
-                    "team_1_win": float(match_result["team_1_win"]),
-                    "team_2_win": float(match_result["team_2_win"]),
-                    "odds_team_1": float(match["odds_team_1"]), "odds_team_2": float(match["odds_team_2"]),
-                    "team_1_confidence": float(match["team_1_confidence"]),
-                    "team_2_confidence": float(match["team_2_confidence"]),
-                    "prediction_svm": float(match["prediction_svm"]),
-                    "mode": match["mode"],
-                    "Team1": match["Team_1"]["name"], "Team2": match["Team_2"]["name"], "nnPickedTeam": nn_picked_team,
-                    "svmPickedTeam": svm_picked_team, "winningTeam": winning_team}
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.get('http://127.0.0.1:8000/csgo/matchResult/')
-        self.assertEqual(response.json()["matchResult"][0], combined)
+        response = self.client.get('http://127.0.0.1:8000/csgo/results/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class TestGetTeam(APITestCase):
@@ -251,19 +234,19 @@ class TestCreatePrediction(APITestCase):
 
     def test_empty(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/')
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_empty_team(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/', json={"team_1": self.team_1})
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/', json={"team_1": self.team_1})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_empty_player(self):
         team_1_copy = self.team_1.copy()
         del team_1_copy["Player_1"]
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -271,7 +254,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         del team_1_copy["Player_1"]["adr"]
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -279,7 +262,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["adr"] = "asdf"
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -287,7 +270,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["kpr"] = "asdf"
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -295,7 +278,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["dpr"] = "asdf"
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -303,7 +286,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["impact"] = "asdf"
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -311,7 +294,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["kast"] = "asdf"
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -319,7 +302,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["winning_percentage"] = "asdf"
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -327,7 +310,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["adr"] = -10.0
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -335,7 +318,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["kpr"] = 1000.0
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -343,7 +326,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["dpr"] = 3000.0
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -351,7 +334,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["impact"] = -10.0
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -359,7 +342,7 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["Player_1"]["kast"] = 20
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -367,13 +350,13 @@ class TestCreatePrediction(APITestCase):
         team_1_copy = self.team_1.copy()
         team_1_copy["winning_percentage"] = 2
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": team_1_copy, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_valid_data(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.post(f'http://127.0.0.1:8000/csgo/prediction/',
+        response = self.client.post(f'http://127.0.0.1:8000/csgo/predictions/',
                                     json={"team_1": self.team_1, "team_2": self.team_2})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -409,5 +392,5 @@ class TestPredictionStats(APITestCase):
 
     def test_valid(self):
         self.client.headers.update({"Authorization": self.admin_token.key})
-        response = self.client.get(f'http://127.0.0.1:8000/csgo/matchResultStats/')
+        response = self.client.get(f'http://127.0.0.1:8000/csgo/results-stats/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)

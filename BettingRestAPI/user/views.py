@@ -107,7 +107,43 @@ class GetAuthenticated(APIView):
 
 
 # register new user
-class Register(APIView):
+class Users(APIView):
+    def put(self, request):
+        """Method updates a user"""
+        check_authorization, response = check_authorization_in_header(request)
+        if not check_authorization:
+            return response
+        data = json.loads(request.body or "{}")
+        check_data, response = check_user_data_request(data)
+        if not check_data:
+            return response
+        user = check_user(request)
+        if user is not None:
+            serialized_user = UserSerializer(data=data)
+            # validate the user and make sure that the user exists error is ignored when the username is the same as in
+            # the authentication
+            if serialized_user.is_valid() or str(user.user) == str(data['username']):
+                # update user
+                user = User.objects.get(username=user.user)
+                user.username = data['username']
+                user.set_password(data['password'])
+                user.email = data['email']
+                user.save()
+                # create or get user just in case
+                token, created = Token.objects.get_or_create(user=user)
+                user = UserSerializer(user).data
+                message = Message("success", f"Successfully updated account: {data['username']}")
+                return create_response({"message": message.repr_json(), "token": token.key, 'user': user},
+                                       status.HTTP_200_OK)
+            else:
+                message = Message("error", "")
+                for error in serialized_user.errors:
+                    message.message += serialized_user.errors[error][0] + "\n"
+                return create_response({"message": message.repr_json()}, status.HTTP_400_BAD_REQUEST)
+        else:
+            message = Message("error", f"Authentication failed")
+            return create_response({"message": message.repr_json()}, status.HTTP_401_UNAUTHORIZED)
+
     def post(self, request):
         """method register a new user"""
         check_authorization, response = check_authorization_in_header(request)
@@ -155,7 +191,7 @@ class Register(APIView):
 
 
 # delete user route
-class DeleteUser(APIView):
+class UsersModification(APIView):
     def delete(self, request, id):
         """method deletes a user given by his id"""
         # check authorization

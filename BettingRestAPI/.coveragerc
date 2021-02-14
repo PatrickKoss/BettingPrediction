@@ -1,0 +1,22 @@
+[run]
+omit =
+    */admin.py,
+    */urls.py,
+    */DeleteAllObjects.py,
+    */models.py,
+    */migrations/*,
+    */apps.py,
+    BettingRestAPI/*,
+    */__init__.py,
+
+
+[report]
+omit =
+    */admin.py,
+    */urls.py,
+    */DeleteAllObjects.py,
+    */models.py,
+    */migrations/*,
+    */apps.py,
+    BettingRestAPI/*,
+    */__init__.py,

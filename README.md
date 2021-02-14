@@ -45,3 +45,40 @@ If we filter all games and restrict the results by picked odds higher than a cer
 can be achieved. In this examples the neuronal network could make about 8% roi when we filter bets that 
 has higher odds than 1.6 from picked games by the model. In absolute numbers that mean the model could achieve 
 about 60 buy ins.
+
+## Getting Started
+1.Install node modules in the frontend
+```
+cd BettingFrontend && npm i
+```
+2.Run the frontend
+````
+cd BettingFrontend && npm run serve
+````
+3.Install python modules
+````
+cd BettingRestAPI && pip install -r requirements.txt
+````
+4.Run the django server
+````
+cd BettingRestAPI && python manage.py runserver
+````
+5.Or run with docker
+````
+docker-compose up -d --build
+````
+
+## Tests
+````
+pyhton manage.py test
+````
+
+## Documentation of Rest Api
+Go to 
+````
+http://localhost:8000/swagger
+````
+or 
+````
+http://localhost:8000/redoc
+````

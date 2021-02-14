@@ -7,22 +7,13 @@ export class CSGORestClient {
   api = config.apiEndpoint;
 
   /**
-   * set the right api endpoint
-   */
-  constructor() {
-    if (process.env.NODE_ENV !== "development") {
-      this.api = config.apiEndpointProduction
-    }
-  }
-
-  /**
    * get the upcoming matches
    * @returns {Promise<{message: *, status: number}|T>}
    */
   async getUpcomingMatches() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
-      return (await axios.get(`${this.api}/csgo/upcomingMatches/`)).data;
+      return (await axios.get(`${this.api}/csgo/upcoming-matches/`)).data;
     } catch (error) {
       return {message: error.response.data.message, status: error.response.status};
     }
@@ -35,7 +26,7 @@ export class CSGORestClient {
   async getMatchesResult() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
-      return (await axios.get(`${this.api}/csgo/matchResult/`)).data;
+      return (await axios.get(`${this.api}/csgo/results/`)).data;
     } catch (error) {
       return {message: error.response.data.message, status: error.response.status};
     }
@@ -48,7 +39,7 @@ export class CSGORestClient {
   async getMatchesResultStats() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
-      return (await axios.get(`${this.api}/csgo/matchResultStats/`)).data;
+      return (await axios.get(`${this.api}/csgo/results-stats/`)).data;
     } catch (error) {
       return {message: error.response.data.message, status: error.response.status};
     }
@@ -91,7 +82,7 @@ export class CSGORestClient {
   async createPrediction(team1, team2, mode) {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
-      return (await axios.post(`${this.api}/csgo/prediction/`, {team_1: team1, team_2: team2, mode: mode})).data;
+      return (await axios.post(`${this.api}/csgo/predictions/`, {team_1: team1, team_2: team2, mode: mode})).data;
     } catch (error) {
       return {message: error.response.data.message, status: error.response.status};
     }
@@ -104,7 +95,7 @@ export class CSGORestClient {
   async checkPermissions() {
     axios.defaults.headers.common['Authorization'] = store.state.token;
     try {
-      return (await axios.get(`${this.api}/csgo/checkPermissions/`)).data;
+      return (await axios.get(`${this.api}/csgo/check-permissions/`)).data;
     } catch (error) {
       return {message: error.response.data.message, status: error.response.status};
     }
